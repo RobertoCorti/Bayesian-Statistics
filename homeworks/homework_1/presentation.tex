@@ -20,17 +20,11 @@
 	\begin{frame}{Logistic regression: \textit{we have some problems}... }
 		In some cases, Maximum Likelihood estimates of the coefficients can lead to unstable results.
 		
-		\only<1>{\begin{figure}
+		\begin{figure}
 			\includegraphics[scale=0.2]{imgs/separation.png}
 		\end{figure}
-		}
-	
-	\only<2>{
-		\begin{figure}
-			\includegraphics[scale=0.2]{imgs/nonidentifiability.png}
-		\end{figure}
-	}
-	
+		
+
 		
 	\end{frame}
 	
@@ -49,8 +43,8 @@
 		\vspace{0.3cm}
 		The aim is to provide \textit{weakly informative priors}
 		\begin{itemize}
+			\item provide minimal information
 			\item able to give regularized coefficient estimates
-			\item more appropriate for automatic use
 		\end{itemize}
 	
 \end{frame}
@@ -63,12 +57,11 @@
 	
 	\textit{"For logistic regression, a change of 5 in the logistic scale moves a probability from 0.01 to 0.5, or from 0.5 to 0.99"}
 	
-	\vspace{0.2cm}
+	%\vspace{0.2cm}
 	
-	Given the logistic regression coefficients $ \beta = (\beta_0, \beta_1, ..., \beta_J ) $ \\
-	if $\beta_i \simeq 5$, for $x=(x_1, ..., x_J) \rightarrow x' =(x_1, ...,x_i+1, ..., x_J)$, then:
-	$$ P(y_i=1 | x)=0.01 \rightarrow P(y'_i=1 | x') \simeq 0.5 $$ 
-	
+	%Given the logistic regression coefficients $ \beta = (\beta_0, \beta_1, ..., \beta_J ) $ \\
+	%if $\beta_i \simeq 5$, for $x=(x_1, ..., x_J) \rightarrow x' =(x_1, ...,x_i+1, ..., x_J)$, then:
+	%$$ P(y_i=1 | x)=0.01 \rightarrow P(y'_i=1 | x') \simeq 0.5 $$ 
 	
 	We rarely encounter this kind of situations, thus  we are willing to assign for $\pi(\beta_i)$ low probabilities for values outside $ [-5, 5]$
 	
@@ -77,7 +70,7 @@
 
 \begin{frame}{General assumptions for weakly-informative priors}
 	
-	In order to have a default prior that could be used in many different contexts, it has to be defined over a scale-independent range.
+	In order to have a default prior that could be used in many different contexts, it has to be defined over a commonly interpretable scale.
 	
 	\vspace{0.4cm}
 	It is required to \textit{standardize} the input variables:
@@ -100,7 +93,7 @@
 	\end{itemize}
 	Typical choices can be:
 	\begin{itemize}
-		\item  for the coefficient terms $\beta_1, ..., \beta_J$, model as a likelihood of a binomial trial with half success and half failure:  \\
+		\item  for the coefficient terms $\beta_1, ..., \beta_J$, model as a likelihood of a binomial trial with half successes and half failures:  \\
 		$\pi(\beta_i) = t_{\nu=1}(\theta=0, s=2.5)$ (Cauchy distribution).
 		\vspace{0.3cm}
 		\item for the costant term $\beta_0$, allow a success probability between $10^{-9}$ and $1-10^{-9}$ for units
@@ -110,12 +103,7 @@
 	
 \end{frame}
 
-\begin{frame}{A tool to use weakly-informative priors in R}
-	We can now combine our weakly prior information with the likelihood through the posterior distribution: $$ \pi(\beta| X, y) \propto  p(y | X, \beta) \pi(\beta)$$
-	We are often interested in having point estimates of the posterior distribution \textrightarrow \textbf{maximum a posteriori (MAP) estimate}
-	
-	\texttt{bayesglm}: based on \texttt{glm}, it allows the specification prior distributions for the coefficients in the t family,
-\end{frame}
+
 
 \begin{frame}{A tool to use weakly-informative priors in R}
 	
@@ -134,46 +122,32 @@
 \end{frame}
 
 
-\begin{frame}{Applications of \texttt{bayesglm}}
-	\begin{enumerate}
-		\item A model predicting voting from demographic predictors,
-		\item A simple bioassay model from an early article [Racine et al. (1986)] on routine applied Bayesian inference,
-		\item A missing-data imputation problem from our current applied work on a study of HIV virus load.
-		\item Evaluation of the predictive
-		performance by using a variety of prior distributions on 45 datasets from the UCI Machine Learning data repository [Newman et al. (1998), Asuncion and Newman (2007)].
-	\end{enumerate}
-\end{frame}
 
-\begin{frame}{Results of \texttt{bayesglm} (1)}
+\begin{frame}{Applications of \texttt{bayesglm} (1)}
 	\begin{figure}
 		\includegraphics[scale=0.278]{imgs/result1.png}
 	\end{figure}
 \end{frame}
 
-\begin{frame}{Results of \texttt{bayesglm} (2)}
+\begin{frame}{Applications of \texttt{bayesglm} (2)}
 	\begin{figure}
 		\includegraphics[scale=0.278]{imgs/result2.png}
 	\end{figure}
 \end{frame}
 
-\begin{frame}{Results of \texttt{bayesglm} (3)}
+\begin{frame}{Applications of \texttt{bayesglm} (3)}
 	\begin{figure}
 		\includegraphics[scale=0.24]{imgs/result3.png}
 	\end{figure}
 \end{frame}
 
-\begin{frame}{Results of \texttt{bayesglm} (4)}
+\begin{frame}{Applications of \texttt{bayesglm} (4)}
 	\begin{figure}
 		\includegraphics[scale=0.24]{imgs/result4.png}
 	\end{figure}
 \end{frame}
 
 
-\begin{frame}{Results of \texttt{bayesglm} (4)}
-	\begin{figure}
-		\includegraphics[scale=0.24]{imgs/result4a.png}
-	\end{figure}
-\end{frame}
 
 	
 \end{document}
