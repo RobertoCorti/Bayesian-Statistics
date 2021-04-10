@@ -30,20 +30,20 @@
 	
 \begin{frame}[t]{The need of (weak) prior information}
 		
-		Adding a prior distribution over regression's coefficient can regularize unstable results.
+		Adding a prior distribution over regression's coefficients can regularize the estimates.
 		\vspace{0.4cm}
 		
 		Which kind of prior do we use?
 		
 		\begin{itemize}
-			\item Non-informative prior
-			\item Fully informative prior
+			\item Non-informative prior $\longrightarrow$ low regularization effect
+			\item Fully informative prior $\longrightarrow$ application-specific
 		\end{itemize}
 	
 		\vspace{0.3cm}
 		The aim is to provide \textit{weakly informative priors}
 		\begin{itemize}
-			\item provide minimal information
+			\item minimal information, valid for any context
 			\item able to give regularized coefficient estimates
 		\end{itemize}
 	
@@ -51,7 +51,7 @@
 
 \begin{frame}{General assumptions for weakly-informative priors}
 	
-	 What prior information can be assumed for a generic model?
+	 Which kind of minimal information is valid for any generic model?
 	
 	\vspace{0.2cm}
 	
@@ -63,14 +63,14 @@
 	%if $\beta_i \simeq 5$, for $x=(x_1, ..., x_J) \rightarrow x' =(x_1, ...,x_i+1, ..., x_J)$, then:
 	%$$ P(y_i=1 | x)=0.01 \rightarrow P(y'_i=1 | x') \simeq 0.5 $$ 
 	
-	We rarely encounter this kind of situations, thus  we are willing to assign for $\pi(\beta_i)$ low probabilities for values outside $ [-5, 5]$
+	These kind of situations are rare to encounter, thus  it is expected that $\pi(\beta_i)$ is lower for values outside $ [-5, 5]$.
 	
 \end{frame}
 
 
 \begin{frame}{General assumptions for weakly-informative priors}
 	
-	In order to have a default prior that could be used in many different contexts, it has to be defined over a commonly interpretable scale.
+	In order to have a default prior that could be used in many different contexts, it has to be defined over a common interpretable scale.
 	
 	\vspace{0.4cm}
 	It is required to \textit{standardize} the input variables:
@@ -93,12 +93,11 @@
 	\end{itemize}
 	Typical choices can be:
 	\begin{itemize}
-		\item  for the coefficient terms $\beta_1, ..., \beta_J$, model as a likelihood of a binomial trial with half successes and half failures:  \\
-		$\pi(\beta_i) = t_{\nu=1}(\theta=0, s=2.5)$ (Cauchy distribution).
+		\item  for the coefficient terms $\beta_1, ..., \beta_J$:
+		$\pi(\beta_i) = t_{\nu=1}(\theta=0, s=2.5)$
 		\vspace{0.3cm}
-		\item for the costant term $\beta_0$, allow a success probability between $10^{-9}$ and $1-10^{-9}$ for units
-		that are average in all the inputs: \\
-		$\pi(\beta_0) = t_{\nu=1}(\theta=0, s=10)$ (Cauchy distribution).
+		\item for the costant term $\beta_0$: \\
+		$\pi(\beta_0) = t_{\nu=1}(\theta=0, s=10)$
 	\end{itemize}
 	
 \end{frame}
@@ -111,12 +110,12 @@
 		\textbf{\texttt{bayesglm}}\\
 		\vspace{0.2cm}
 		\begin{itemize}
-			\item \textbf{Goal}: \small get MAP estimates $\beta_{MAP}$ and $V_{\beta_{MAP}}$
-			\item \textbf{Computation}: \small {Considering the prior distribution for each coefficient as a mixture of normals with unknown scale $\sigma_i$}  $$\pi(\beta_i) = \pi(\beta_i|\sigma_i) \pi(\sigma_i) = \mathcal{N}(\mu_i, \sigma_i^2) \text{inv-}\chi^2(\nu^2_i, s^2_i)$$
+			\item \textbf{Goal}: \small get $\beta_{MAP}$ and $V_{\beta_{MAP}}$ estimates.
+			\item \textbf{Computation}: \small {Considering the prior distribution for each coefficient as:}  $$\pi(\beta_i) = \pi(\beta_i|\sigma_i) \pi(\sigma_i) = \mathcal{N}(\mu_i, \sigma_i^2) \text{inv-}\chi^2(\nu^2_i, s^2_i)$$
 			estimates of $\beta_{MAP}$ and $V_{\beta_{MAP}}$ are obtained in a iterative way: \\
 			\vspace{0.2cm}
-			- for a fixed $\sigma$, approximate the priors as $\pi(\beta_i) \approx \mathcal{N}(\mu_i, \sigma_i^2)$ and get $\hat{\beta}$ by using weighted least squares. \\
-			- determine the expected value of the log-posterior density $\log p(\beta, \sigma | X, y)$ and maximize it with respect to $\sigma$ in order to get to get the estimate $\hat{\sigma}$
+			- for a fixed $\sigma$, approximate the priors as $\pi(\beta_i) \approx \mathcal{N}(\mu_i, \sigma_i^2)$ and get $\hat{\beta}$ and $\hat{V}_{\beta_{MAP}}$ by using weighted least squares. \\
+			- determine the expected value of the log-posterior density $\log p(\beta, \sigma | X, y)$ and maximize it with respect to $\sigma$ in order to get to get the estimate $\hat{\sigma}$.
 		\end{itemize}
 		
 \end{frame}
