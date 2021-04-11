@@ -111,10 +111,10 @@
 		\vspace{0.2cm}
 		\begin{itemize}
 			\item \textbf{Goal}: \small get $\beta_{MAP}$ and $V_{\beta_{MAP}}$ estimates.
-			\item \textbf{Computation}: \small {Considering the prior distribution for each coefficient as:}  $$\pi(\beta_i) = \pi(\beta_i|\sigma_i) \pi(\sigma_i) = \mathcal{N}(\mu_i, \sigma_i^2) \text{inv-}\chi^2(\nu^2_i, s^2_i)$$
+			\item \textbf{Computation}: \small {Considering the prior distribution for each coefficient as:}  $$\pi(\beta_i) = \int   d \sigma_i \pi(\beta_i|\sigma_i) \pi(\sigma_i) = \int d\sigma_i \mathcal{N}(\theta_i, \sigma_i^2) \text{inv-}\chi^2(\nu^2_i, s^2_i)$$
 			estimates of $\beta_{MAP}$ and $V_{\beta_{MAP}}$ are obtained in a iterative way: \\
 			\vspace{0.2cm}
-			- for a fixed $\sigma$, approximate the priors as $\pi(\beta_i) \approx \mathcal{N}(\mu_i, \sigma_i^2)$ and get $\hat{\beta}$ and $\hat{V}_{\beta_{MAP}}$ by using weighted least squares. \\
+			- for a fixed $\sigma$, approximate the priors as $\pi(\beta_i) \approx \mathcal{N}(\theta_i, \sigma_i^2)$ and get $\hat{\beta}$ and $\hat{V}_{\beta_{MAP}}$ by using weighted least squares. \\
 			- determine the expected value of the log-posterior density $\log p(\beta, \sigma | X, y)$ and maximize it with respect to $\sigma$ in order to get to get the estimate $\hat{\sigma}$.
 		\end{itemize}
 		
