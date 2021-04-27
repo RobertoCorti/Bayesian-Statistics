@@ -1,0 +1,285 @@
+---
+title: "Lab sessions 4 - Bayesian Statistics"
+date: "April, 26 2021"
+output:
+  html_document:
+    toc: yes
+  beamer_presentation:
+    highlight: tango
+  include: null
+  ioslides_presentation:
+    highlight: tango
+  pdf_document:
+    highlight: tango
+    keep_tex: yes
+    toc: yes
+  slide_level: 2
+  slidy_presentation:
+    fig.height: 3
+  fig.width: 4
+  highlight: tango
+header-includes:
+- \usepackage{color}
+- \usepackage{tcolorbox}
+- \definecolor{Purple}{HTML}{911146}
+- \definecolor{Orange}{HTML}{CF4A30}
+institute: University of Udine & University of Trieste
+graphics: yes
+subtitle: 
+fontsize: 10pt
+---
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.align = 'center', warning=FALSE, message=FALSE,  dev='png', global.par = TRUE, dev.args=list(pointsize=10), fig.path = 'figs/',  eval=TRUE, cache=TRUE)
+library(MASS)
+```
+```{r setup, include=FALSE}
+library(knitr)
+local({
+    hook_plot = knit_hooks$get('plot')
+    knit_hooks$set(plot = function(x, options) {
+        paste0('\n\n----\n\n', hook_plot(x, options))
+    })
+})
+```
+
+
+## Cockroaches
+
+**1** Load and explore the dataset in the file `pest_data.RDS`. The dataset includes 14 variables, that are:
+
+* `complaints`: Number of complaints per building per month
+* `building_id`: The unique building identifier
+* `traps`: The number of traps used per month per building
+* `date`: The date at which the number of complaints are recorded
+* `live_in_super`: An indicator for whether the building has a live-in super
+* `age_of_building`: The age of the building
+* `total_sq_foot`: The total square footage of the building
+* `average_tenant_age`: The average age of the tenants per building
+* `monthly_average_rent`: The average monthly rent per building
+* `floors`: The number of floors per building
+
+<!-- ```{r,eval=TRUE,echo=FALSE} -->
+<!-- knitr::opts_chunk$set( -->
+<!--   echo = TRUE,  -->
+<!--   dev = "png", -->
+<!--   dpi = 150, -->
+<!--   fig.align = "center", -->
+<!--   comment = NA -->
+<!--   ) -->
+<!-- ``` -->
+```{r,eval=TRUE,echo=TRUE, warning=FALSE, results='hide',message=FALSE}
+library(rstan)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(bayesplot)
+
+theme_set(bayesplot::theme_default())
+
+# seed for R's pseudo-RNGs, not Stan's
+set.seed(1123) 
+```
+
+```{r,eval=TRUE,echo=TRUE}
+pest_data <- readRDS('pest_data.RDS')
+str(pest_data)
+summary(pest_data)
+
+##number of buildings
+N_buildings <- length(unique(pest_data$building_id))
+N_buildings
+```
+
+```{r,eval=TRUE,echo=FALSE}
+ggplot(pest_data, aes(x = complaints)) + 
+  geom_bar()
+
+ggplot(pest_data, aes(x = traps, y = complaints, color = live_in_super == TRUE)) + 
+    geom_jitter()
+```
+```{r, eval=TRUE,echo=FALSE, data-plots-ts, fig.height = 16,fig.width = 6, fig.height = 8}
+ggplot(pest_data, aes(x = date, y = complaints, color = live_in_super == TRUE)) + 
+  geom_line(aes(linetype = "Number of complaints")) + 
+  geom_point(color = "black") + 
+  geom_line(aes(y = traps, linetype = "Number of traps"), color = "black", size = 0.25) + 
+  facet_wrap(~building_id, scales = "free", ncol = 2, labeller = label_both) + 
+  scale_x_date(name = "Month", date_labels = "%b") + 
+  scale_y_continuous(name = "", limits = range(pest_data$complaints)) + 
+  scale_linetype_discrete(name = "") + 
+  scale_color_discrete(name = "Live-in super")
+```
+
+<!-- Knowing that the number of complaints over a month is unlikely to be zero and that rarerly there are a large number of complaints over a month, how would you model the outcome variable `complaints`? -->
+
+**2** Write the following Poisson model in Stan, for $i=1,\ldots,120$
+
+\begin{align*}
+	\textrm{complaints}_i & \sim \textrm{Poisson}(\lambda_i), \\
+	\lambda_i & = \exp{(\eta_i)} \\
+	\eta_i &= \alpha + \beta \, \textrm{traps}_i
+\end{align*}
+Is the number of complaints associated with the number of traps? 
+```{r}
+## compile the model
+comp_model_P <- stan_model('simple_poisson_regression.stan')
+```
+```{r stan-data}
+## arrange data into a list
+stan_dat_simple <- list(
+  N = nrow(pest_data), 
+  complaints = pest_data$complaints,
+  traps = pest_data$traps
+)
+str(stan_dat_simple)
+```
+```{r fit_P_real_data, cache=TRUE}
+## fit the model
+fit_P_real_data <- sampling(comp_model_P, data = stan_dat_simple)
+```
+
+```{r results_simple_P}
+## print the parameters 
+print(fit_P_real_data, pars = c('alpha','beta'))
+```
+
+```{r hist_simple_P}
+mcmc_hist(as.matrix(fit_P_real_data, pars = c('alpha','beta')))
+mcmc_scatter(as.matrix(fit_P_real_data, pars = c('alpha','beta')), alpha = 0.2)
+```
+It appears that there is association between the number of bait stations and the number of complaints. 
+
+**3** Verify that  the 'Poisson' assumption in the Poisson generalised linear model is not satisfied. Improve your model including the indicator variable for whether the building has a live-in super and the total square footage of the building (offset).
+
+```{r}
+## posterior predictive checking
+y_rep <- as.matrix(fit_P_real_data, pars = "y_rep")
+ppc_dens_overlay(y = stan_dat_simple$complaints, y_rep[1:200,])
+```
+
+```{r}
+## standardised residuals of the observed vs predicted number of complaints
+mean_y_rep <- colMeans(y_rep)
+std_resid <- (stan_dat_simple$complaints - mean_y_rep) / sqrt(mean_y_rep)
+qplot(mean_y_rep, std_resid) + hline_at(2) + hline_at(-2)
+```
+Residuals are mostly positive, thus the model tends to underestimate the number of complaints.
+
+We expand the model adding the live-in super variable and the total square footage of the building (offset). You can interpret the parameters as rate of complaints per square foot.
+
+```{r}
+ggplot(pest_data, aes(x = log(total_sq_foot), y = log1p(complaints))) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+\begin{align*}
+	\textrm{complaints}_i & \sim \textrm{Poisson}(\lambda_i) \\
+	\lambda_i & = \exp{(\eta_i)} \\
+	\eta_i &= \alpha + \beta \, \textrm{traps}_i + \beta_{\rm super} \, {\rm super}_{i} + \text{log_sq_foot}_{i}
+\end{align*}
+
+```{r}
+## add the two variables to the list of the data
+stan_dat_simple$log_sq_foot <- log(pest_data$total_sq_foot/1e4)
+stan_dat_simple$live_in_super <- pest_data$live_in_super
+str(stan_dat_simple)
+```
+
+```{r compmultPDGP}
+## compile the model
+comp_model_P_mult <- stan_model('multiple_poisson_regression.stan')
+```
+
+```{r fit_mult_P_real_dat}
+fit_model_P_mult_real <- sampling(comp_model_P_mult, data = stan_dat_simple)
+print(fit_model_P_mult_real, pars = c('alpha','beta','beta_super'))
+y_rep <- as.matrix(fit_model_P_mult_real, pars = "y_rep")
+ppc_dens_overlay(stan_dat_simple$complaints, y_rep[1:200,])
+```
+```{r}
+ppc_intervals(
+  y = stan_dat_simple$complaints, 
+  yrep = y_rep,
+  x = stan_dat_simple$traps
+) + 
+  labs(x = "Number of traps", y = "Number of complaints")
+```
+
+We've increased the tails a bit more at the larger numbers of traps but we still have some large observed numbers of complaints that the model would consider extremely unlikely events. 
+
+
+**4** Write the following model in stan and compare results with the previous model.
+
+\begin{align*}
+\text{complaints}_i & \sim \text{Neg-Binomial}(\lambda_i, \phi) \\
+\lambda_i & = \exp{(\eta_i)} \\
+\eta_i &= \alpha + \beta \, {\rm traps}_i + \beta_{\rm super} \, {\rm super}_{i} + \text{log_sq_foot}_{i}
+\end{align*}
+
+
+In Stan the negative binomial mass function we will use is called 
+$\texttt{neg_binomial_2_log}( \text{reals} \, \eta, \text{reals} \, \phi)$. Like the `poisson_log` function, this negative binomial mass function is parameterized in terms of its log-mean, $\eta$, but it also has a precision $\phi$ such that
+
+$$
+\mathbb{E}[y] \, = \lambda = \exp(\eta)
+$$
+
+$$
+\text{Var}[y] = \lambda + \lambda^2/\phi = \exp(\eta) + \exp(\eta)^2 / \phi.
+$$
+
+As $\phi$ gets larger, the term $\lambda^2 / \phi$ approaches zero and so the variance of the negative-binomial approaches $\lambda$, i.e., the negative-binomial gets closer and closer to the Poisson.
+
+```{r message=FALSE, cache=TRUE, results="hide"}
+comp_model_NB <- stan_model('multiple_NB_regression.stan')
+```
+
+```{r runNB}
+fitted_model_NB <- sampling(comp_model_NB, data = stan_dat_simple)
+#fitted_model_NB <- stan(file="multiple_NB_regression.stan", data=stan_dat_simple)
+samps_NB <- rstan::extract(fitted_model_NB)
+```
+
+```{r ppc-full}
+## predictions vs. the data
+y_rep <- samps_NB$y_rep
+ppc_dens_overlay(stan_dat_simple$complaints, y_rep[1:200,])
+```
+
+```{r}
+## standardised residuals
+mean_inv_phi <- mean(samps_NB$inv_phi)
+mean_y_rep <- colMeans(y_rep)
+std_resid <- (stan_dat_simple$complaints - mean_y_rep) / sqrt(mean_y_rep + mean_y_rep^2*mean_inv_phi)
+qplot(mean_y_rep, std_resid) + hline_at(2) + hline_at(-2)
+```
+
+```{r}
+## prediction by number of traps
+ppc_intervals(
+  y = stan_dat_simple$complaints, 
+  yrep = y_rep,
+  x = stan_dat_simple$traps
+) + 
+  labs(x = "Number of traps", y = "Number of complaints")
+```
+
+Looks OK but... Data are clustered by building. A posterior predictive check can help us understanding if it would be a good idea to add the building information into the model.
+
+```{r ppc-group_means}
+ppc_stat_grouped(
+  y = stan_dat_simple$complaints, 
+  yrep = y_rep, 
+  group = pest_data$building_id, 
+  stat = 'mean',
+  binwidth = 0.2
+)
+```
+
+We're getting plausible predictions for most building means but some are
+estimated better than others and some have larger uncertainties than we might
+expect. If we explicitly model the variation across buildings we may be able to
+get much better estimates.
+
+... to be continued
+

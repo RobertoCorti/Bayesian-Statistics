@@ -1,0 +1,231 @@
+---
+title: "Lab sessions 3 - Bayesian Statistics"
+date: "April, 15 2021"
+output:
+  html_document:
+    toc: yes
+  beamer_presentation:
+    highlight: tango
+  include: null
+  ioslides_presentation:
+    highlight: tango
+  pdf_document:
+    highlight: tango
+    keep_tex: yes
+    toc: yes
+  slide_level: 2
+  slidy_presentation:
+    fig.height: 3
+  fig.width: 4
+  highlight: tango
+header-includes:
+- \usepackage{color}
+- \usepackage{tcolorbox}
+- \definecolor{Purple}{HTML}{911146}
+- \definecolor{Orange}{HTML}{CF4A30}
+institute: University of Udine & University of Trieste
+graphics: yes
+subtitle: 
+fontsize: 10pt
+---
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.align = 'center', warning=FALSE, message=FALSE, fig.asp=0.625, dev='png', global.par = TRUE, dev.args=list(pointsize=10), fig.path = 'figs/')
+library(MASS)
+```
+```{r setup, include=FALSE}
+library(knitr)
+local({
+    hook_plot = knit_hooks$get('plot')
+    knit_hooks$set(plot = function(x, options) {
+        paste0('\n\n----\n\n', hook_plot(x, options))
+    })
+})
+```
+
+## Random walk Metropolis-Hastings 
+
+Consider the *probit* model defined as
+
+\begin{align*}
+y_i &\sim Bernoulli(p_i)\\
+p_i &= \Phi(x^T_i\beta)
+\end{align*}
+
+where $y_i \in {0,1}$ is the binary response variable, $x_i \in \mathbb{R}^{q+1}$ is the vector of covariates and $\Phi$ is the cdf of the standard normal distribution. 
+Our aim is to estimate the vector of coefficients $\beta$.
+
+* Load the dataset $\texttt{bank}$ from the package $\texttt{gclus}$. The first column is the response variable which describes the status of the banknotes: 0 = genuine, 1 = counterfeit. Then, select the following 4 columns as independent variables: Length, Left, Right, Bottom (remember to add a column for the intercept).
+
+```{r, echo=TRUE, eval=TRUE}
+library(gclus)
+data(bank)
+bank <- as.matrix(bank)
+
+y <- bank[,1]
+X <- cbind(1,bank[,2:5])
+q <- dim(X)[2] 
+n <- dim(X)[1]
+```
+* Set a flat prior distribution on the parameters $\beta$, that is $\pi(\beta)\propto 1$. What is the posterior distribution? Write the function of the posterior distribution.
+  
+```{r, echo=TRUE, eval=TRUE}
+post <- function(beta, y=y, X=X){
+    pi <- pnorm(X%*%matrix(beta,ncol=1))
+    return(prod(pi^y * (1-pi)^(1-y)))
+}
+```
+  
+* Implement the following random walk Metropolis-Hastings algorithm:
+	
+	- Initialize $\beta^{(0)}=\hat{\beta}$
+	- For S-1 iterations repeat the following steps
+	- Generate $\beta^* \sim N_{q+1}(\beta^{(s-1)}, \tau^2\hat\Sigma)$
+	- Compute the acceptance probability as
+		$$\rho(\beta^{(s-1)},\beta^*)=\min\left(1, \frac{\pi(\beta^*|y)}{\pi(\beta^{(s-1)}|y)}\right)$$
+	- Generate $U \sim U(0,1)$: if $U < \rho(\beta^{(s-1)},\beta^*)$, then  $\beta^{(s)}=\beta^*$, otherwise  $\beta^{(s)}=\beta^{(s-1)}$.
+
+```{r, echo=TRUE, eval=TRUE}
+require(mvtnorm)
+
+mh <- function(Nsim, tau,y,X){
+    
+    beta <- matrix(0, nrow=Nsim, ncol=ncol(X))
+    sigma.asymp <- summary(glm(y~X,
+                               family=binomial(link="probit")))$cov.unscaled
+    beta[1,] <- summary(glm(y~X,
+                            family=binomial(link="probit")))$coefficients[,1]
+    
+    for(s in 2:Nsim){
+        proposal <- rmvnorm(1, beta[s-1,], tau^2*sigma.asymp)
+        rho <- min(1, post(proposal, y, X) /post(beta[s-1,], y, X))
+        if(runif(1)<rho){
+            beta[s,] <- proposal
+        }else{
+            beta[s,] <- beta[s-1,]
+        }
+    }
+    return(beta)
+}
+```
+
+* Simulate 10000 iterations using different values of $\tau= 0.1, 1, 4$.  Then plot the trace of the parameter $\beta_1$ (use the function plot() with type="l"), the autocorrelation (use the function acf()) and the histogram adding a vertical line for the posterior estimate of the mean. Which value of $\tau$ seems the best?
+
+```{r, echo=TRUE, eval=TRUE}
+b1 <- mh(1e4, .1,y,X)
+b2 <- mh(1e4, 1,y,X)
+b3 <- mh(1e4, 4,y,X)
+
+b1[1:6,2]
+b2[1:6,2]
+b3[1:6,2]
+
+par(mfcol=c(3,3))
+##beta2
+plot(b1[,2], type="l", ylab="Trace", xlab="Iteration")
+plot(b2[,2], type="l", ylab="Trace", xlab="Iteration")
+plot(b3[,2], type="l", ylab="Trace", xlab="Iteration")
+
+acf(b1[,2], main="")
+acf(b2[,2], main="")
+acf(b3[,2], main="")
+
+hist(b1[1e3:1e4,2], breaks=50, border="gray40",freq=F, main="")
+abline(v=mean(b1[1e3:1e4,2]), col="firebrick3", lty=2)
+hist(b2[1e3:1e4,2], breaks=50, border="gray40",freq=F, main="")
+abline(v=mean(b2[1e3:1e4,2]), col="firebrick3", lty=2)
+hist(b3[1e3:1e4,2], breaks=50, border="gray40",freq=F, main="")
+abline(v=mean(b3[1e3:1e4,2]), col="firebrick3", lty=2)
+```
+
+* Using the selected simulations, give a Monte Carlo estimate of the posterior mean and variance of $\beta$ (burn-in=1000 and thin=10). Compare the posterior estimates with the ones obtained using the function $\texttt{glm}$.
+
+```{r, echo=TRUE, eval=TRUE}
+post_sample <- b2[seq(1e3,1e4,by=10),]
+par(mfrow=c(2,2))
+plot(post_sample[,2], type="l", ylab="Trace", xlab="Iteration")
+acf(post_sample[,2], main="")
+hist(post_sample[,2], border="gray40",freq=F, main="")
+abline(v=mean(b2[1e3:1e4,2]), col="firebrick3", lty=2)
+
+round(colMeans(post_sample),2)
+round(summary(glm(y~X,family=binomial(link="probit")))$coefficients[,1],2)
+
+
+round(apply(post_sample, 2, var),2)
+round(diag(summary(glm(y~X,family=binomial(link="probit")))$cov.unscaled),2)
+```
+
+## Gibbs sampler
+
+* The same model can be written using the definition of an auxiliary latent variable:
+\begin{align*}
+  y_i &= \mathbb{1}_{z_i> 0}\\
+  z_i &\sim N(x_i \beta,1)
+\end{align*}
+Prove that the two model specifications are equivalent.
+
+* Given that the full conditional distributions for $z$ and $\beta$ are
+$$ z_i| \beta, x_i, y_i \sim \begin{cases}
+   N_+(x_i\beta,1) \quad \text{if } y_i=1\\
+   N_-(x_i\beta,1) \quad \text{if } y_i=0
+\end{cases}$$ 
+where $N_+$ and $N_-$ represent the left and right truncated normal distribution on 0, and 
+$$\beta|X,y,z \sim N_{q+1}((X^T X)^{-1}X^Tz, (X^TX)^{-1}) $$
+
+
+* Implement a Gibbs' sampler to generate $\beta$ from the posterior distribution. Simulate a sample of 10000 draws of $\beta$ and plot the results.
+  - Inizialize $\beta^{1}$ and $z^{1}$
+  - for i in $2,\ldots,nsim$
+    - generate $z^{(s)}|\beta^{(s-1)}$
+    - generate $\beta^{(s)}|z^{(s)}$
+```{r, echo=TRUE, eval=TRUE}
+library(truncnorm)
+
+gs <- function(Nsim,y,X){
+    beta <- matrix(0,nrow=Nsim,ncol=ncol(X))
+    z <- c()
+    beta[1,]=summary(glm(y~X,family=binomial(link="probit")))$coefficients[,1]
+    S <- solve(t(X)%*%X)
+    SX <- S%*%t(X) 
+    for(i in 2:Nsim){
+        mu <- X%*%beta[i-1,]
+        z[y==1] <- rtruncnorm(sum(y),a=0,b=Inf,mean=mu[y==1],sd=1)
+        z[y==0] <- rtruncnorm(n-sum(y),a=-Inf,b=0,mean=mu[y==0],sd=1)
+        beta[i,] <- rmvnorm(1, SX%*%z,S)
+    }
+    return(beta)
+}
+```
+	
+```{r, echo=TRUE, eval=TRUE}
+bgs <- gs(1e4,y,X)
+par(mfrow=c(2,2))
+plot(bgs[,2], type="l", ylab="Trace", xlab="Iteration")
+acf(bgs[,2], main="")
+hist(bgs[,2], breaks=50, border="gray40",freq=F, main="")
+abline(v=mean(bgs[1e3:1e4,2]), col="firebrick3", lty=2)
+```
+```{r, echo=TRUE, eval=TRUE}
+post_sample <- bgs[seq(1e3,1e4,by=10),]
+par(mfrow=c(2,2))
+plot(post_sample[,2], type="l", ylab="Trace", xlab="Iteration")
+acf(post_sample[,2], main="")
+hist(post_sample[,2], breaks=50, border="gray40",freq=F, main="")
+abline(v=mean(post_sample[,2]), col="firebrick3", lty=2)
+
+
+round(colMeans(post_sample),2)
+round(summary(glm(y~X,family=binomial(link="probit")))$coefficients[,1],2)
+
+
+round(apply(post_sample, 2, var),2)
+round(diag(summary(glm(y~X,family=binomial(link="probit")))$cov.unscaled),2)
+```
+
+  * Compare the two algorithms using the function system.time()
+```{r}
+system.time(mh(Nsim = 10000,tau = 1,y = y,X = X))
+system.time(gs(Nsim = 10000,y = y,X = X))
+```
+
+
