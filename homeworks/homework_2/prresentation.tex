@@ -75,19 +75,54 @@
 	\end{frame}
 
 	\begin{frame}{Prior predictive checking}{Fake data can be almost as valuable as real data}
+		\textbf{Generative model}:	$ \theta^* \sim p(\theta) \longrightarrow y^* \sim p(y|\theta^*) \Longleftrightarrow  y^* \sim p(y)$
+		
+		\begin{figure}
+			\includegraphics[scale=0.3]{images/fake_data.png}
+		\end{figure}
+			
+		
 		
 	\end{frame}
 
 	\begin{frame}{MCMC diagnostics}{Moving beyond trace plots}
-		contenuto...
+		\begin{figure}
+			\centering
+			\begin{minipage}{.5\textwidth}
+				\centering
+				\includegraphics[width=1.0\linewidth]{images/scatterplot.png}
+			\end{minipage}\hfill
+			\begin{minipage}{.5\textwidth}
+				\centering
+				\includegraphics[width=1.0\linewidth]{images/coplot.png}
+			\end{minipage}
+		\end{figure}
 	\end{frame}
 	
 	\begin{frame}{Posterior predictive checks}{How did we do?}
-		contenuto...
+		\textbf{Posterior predictive distribution}: $p(\widetilde{y}| y) = \int d\theta ~ p(\widetilde{y}|\theta) p(\theta | y)$
+		
+		\only<1>{
+			\begin{figure}
+				\includegraphics[scale=0.4]{images/posterior_predictive.png}
+			\end{figure}
+		}
+	
+		\only<2>{
+			\begin{figure}
+				\includegraphics[scale=0.42]{images/skew.png}
+			\end{figure}
+		}
+		
 	\end{frame}
 
 	\begin{frame}{Model comparison}{Looking \textit{when} and \textit{where} a model is better than another}
-		contenuto...
+		\textbf{LOO predictive distrubution}: $p(y_i | y_{-i}) $
+		
+		\begin{figure}
+			\includegraphics[scale=0.36]{images/model_comparison.png}
+		\end{figure}
+		
 	\end{frame}
 
 
