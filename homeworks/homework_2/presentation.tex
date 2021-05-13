@@ -44,9 +44,9 @@
 	
 		\only<2>{
 			
-		\begin{center}
-			\includegraphics[scale=0.3]{images/regions.png}
-		\end{center}
+		
+			\includegraphics[scale=0.24]{images/regions.png}
+		
 	
 		\begin{figure}
 			\centering
@@ -63,12 +63,14 @@
 	
 		\only<3>{
 		\begin{itemize}
-			\item \textbf{Model 1}: simple linear regression,
-			\vspace{0.6cm}
-			\item \textbf{Model 2}: multilevel model where 			observations are stratified by WHO super-regions,
-			\vspace{0.6cm}
-			\item \textbf{Model 3}:  multilevel model where
-			observations are stratified by clustered super-region.
+			\item \textbf{Model 1}: simple linear regression 
+			$$ \log(\text{PM}_{2.5}) \sim \mathcal{N}(\alpha + \beta \log(\text{satellite}), \sigma)$$
+			\item \textbf{Model 2}: multilevel model 
+			$$ \log(\text{PM}_{2.5, j}) \sim \mathcal{N}(\mu_j, \sigma), ~~~ \mu_j = \alpha_0 + \alpha_j + (\beta_0 + \beta_j)\log(\text{satellite}_j),  $$
+			where observations are stratified by WHO super-regions.
+			\item \textbf{Model 3}: multilevel model 
+			$$ \log(\text{PM}_{2.5, j}) \sim \mathcal{N}(\mu_j, \sigma), ~~~ \mu_j = \alpha_0 + \alpha_j + (\beta_0 + \beta_j)\log(\text{satellite}_j),  $$
+			where observations are stratified by clustered super-region.
 		\end{itemize}
 		
 			}
@@ -80,7 +82,7 @@
 		\begin{figure}
 			\includegraphics[scale=0.3]{images/fake_data.png}
 		\end{figure}
-			
+		
 		
 		
 	\end{frame}
@@ -93,16 +95,24 @@
 	
 	\begin{frame}{Posterior predictive checks}{How did we do?}
 		\textbf{Posterior predictive distribution}: $p(\widetilde{y}| y) = \int d\theta ~ p(\widetilde{y}|\theta) p(\theta | y)$
-		
 		\only<1>{
+			\vspace{0.05cm}
+			\begin{center}
+				$ \theta^* \sim p(\theta|y) \longrightarrow \widetilde{y}^* \sim p(\widetilde{y}|\theta^*) \Longleftrightarrow  \widetilde{y}^* \sim p(\widetilde{y} | y)$
+			\end{center}
+			
 			\begin{figure}
-				\includegraphics[scale=0.4]{images/posterior_predictive.png}
+				\includegraphics[scale=0.28]{images/posterior_predictive.png}
 			\end{figure}
 		}
 	
 		\only<2>{
+			\vspace{0.05cm}
+			\begin{center}
+				$ T(\widetilde{y}) = \text{skew}(\widetilde{y})$
+			\end{center}
 			\begin{figure}
-				\includegraphics[scale=0.42]{images/skew.png}
+				\includegraphics[scale=0.28]{images/skew.png}
 			\end{figure}
 		}
 		
@@ -112,7 +122,7 @@
 		\textbf{LOO predictive distrubution}: $p(y_i | y_{-i}) $
 		
 		\begin{figure}
-			\includegraphics[scale=0.36]{images/model_comparison.png}
+			\includegraphics[scale=0.3]{images/model_comparison.png}
 		\end{figure}
 		
 	\end{frame}
