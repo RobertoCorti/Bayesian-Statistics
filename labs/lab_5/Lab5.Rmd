@@ -48,7 +48,7 @@ We are analysing data about complaints for the presence of cocroaches in 10 resi
 
 A posterior predictive check considering that the data are clustered by building.
 
-```{r,eval=TRUE,echo=TRUE, warning=FALSE, results='hide',message=FALSE}
+```{r message=FALSE, warning=FALSE, results='hide'}
 library(rstan)
 library(dplyr)
 library(lubridate)

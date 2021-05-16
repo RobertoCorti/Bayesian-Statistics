@@ -95,7 +95,8 @@ ggplot(pest_data, aes(x = complaints)) +
   geom_bar()
 
 ggplot(pest_data, aes(x = traps, y = complaints, color = live_in_super == TRUE)) + 
-    geom_jitter()
+    geom_jitter() +
+    labs(color='Live-in super')
 ```
 ```{r, eval=TRUE,echo=FALSE, data-plots-ts, fig.height = 16,fig.width = 6, fig.height = 8}
 ggplot(pest_data, aes(x = date, y = complaints, color = live_in_super == TRUE)) + 
@@ -155,6 +156,15 @@ It appears that there is association between the number of bait stations and the
 y_rep <- as.matrix(fit_P_real_data, pars = "y_rep")
 ppc_dens_overlay(y = stan_dat_simple$complaints, y_rep[1:200,])
 ```
+```{r}
+ppc_intervals(
+  y = stan_dat_simple$complaints, 
+  yrep = y_rep,
+  x = stan_dat_simple$traps
+) + 
+  labs(x = "Number of traps", y = "Number of complaints")
+```
+
 
 ```{r}
 ## standardised residuals of the observed vs predicted number of complaints

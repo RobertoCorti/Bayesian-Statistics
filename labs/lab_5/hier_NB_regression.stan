@@ -16,9 +16,9 @@ data {
   vector[N] log_sq_foot;  
   
   // building-level data
-  int<lower=1> K;
-  int<lower=1> J;
-  int<lower=1, upper=J> building_idx[N];
+  int<lower=1> K; // number of building features
+  int<lower=1> J; // number of buildings
+  int<lower=1, upper=J> building_idx[N]; // b(i) for i = 1, ..., N
   matrix[J,K] building_data;
 }
 parameters {
