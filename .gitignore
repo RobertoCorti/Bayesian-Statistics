@@ -55,7 +55,8 @@ slides/
 *.cb
 *.cb2
 .*.lb
-
+*.nav
+*.snm
 
 ## Intermediate documents:
 *.dvi
