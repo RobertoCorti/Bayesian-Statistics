@@ -20,10 +20,11 @@ comp_model_1 <- stan_model('model_1.stan')
 # fit
 fit_model_1 <- sampling(comp_model_1, data = stan_dat_model_1)
 
-saveRDS(fit_model_1, "model_1_fit.rds")
+saveRDS(fit_model_1, "models/model_1_fit.rds")
 
-fit_model_1 <- readRDS("model_1_fit.rds")
+fit_model_1 <- readRDS("models/model_1_fit.rds")
 
-mcmc_hist(as.matrix(fit_model_1, pars = c('att_team')))
-mcmc_hist(as.matrix(fit_model_1, pars = c('def_team')))
-mcmc_scatter(as.matrix(fit_P_real_data, pars = c('alpha','beta')), alpha = 0.2)
+
+print(fit_model_1, pars = c('att_team','def_team','home'))
+
+
