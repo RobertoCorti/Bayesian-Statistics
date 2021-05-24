@@ -145,5 +145,5 @@ remove(temp)
 
 saveRDS(df, file="data/season1991.rds")
 saveRDS(df_goals, file = "data/season1991_goals.rds")
-saveRDS(df_ranking, file="./data/season1991_ranking.rds")
-saveRDS(cum_points_list, file="./data/cum_points.rds")
+saveRDS(df_ranking, file="data/season1991_ranking.rds")
+saveRDS(cum_points_list, file="data/cum_points.rds")
