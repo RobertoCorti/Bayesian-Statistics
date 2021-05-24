@@ -1,15 +1,3 @@
-//
-// This Stan program defines a simple model, with a
-// vector of values 'y' modeled as normally distributed
-// with mean 'mu' and standard deviation 'sigma'.
-//
-// Learn more about model development with Stan at:
-//
-//    http://mc-stan.org/users/interfaces/rstan.html
-//    https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started
-//
-
-// The input data is a vector 'y' of length 'N'.
 data {
   int<lower=0> N; //number of games
   int<lower=0> T; //number of teams
@@ -22,14 +10,14 @@ data {
    
 }
 
-// The parameters accepted by the model. Our model
-// accepts two parameters 'mu' and 'sigma'.
 parameters {
-  vector[1] home;
-  vector[T] att_team;
-  vector[T] def_team;
+  real home;
   real att;
   real def;
+  
+  vector[T-1] att_team_raw; //https://mc-stan.org/docs/2_18/stan-users-guide/parameterizing-centered-vectors.html
+  vector[T-1] def_team_raw; // we need that sum(att_team) = sum(def_team) = 0
+  
   real<lower=0> tau_att;
   real<lower=0> tau_def;
 }
@@ -37,11 +25,12 @@ parameters {
 transformed parameters{
   real sigma_att = inv(tau_att);
   real sigma_def = inv(tau_def);
+  
+  vector[T] att_team = append_row(att_team_raw, -sum(att_team_raw));
+  vector[T] def_team = append_row(def_team_raw, -sum(att_team_raw));
 }
 
-// The model to be estimated. We model the output
-// 'y' to be normally distributed with mean 'mu'
-// and standard deviation 'sigma'.
+
 model {
   tau_att ~ gamma(0.1, 0.1);
   tau_def ~ gamma(0.1, 0.1);
@@ -51,9 +40,9 @@ model {
   
   home ~ normal(0, 10000);
   
-  for (n in 1:T){
-    att_team[n] ~ normal(att, sigma_att);
-    def_team[n] ~ normal(def, sigma_def);
+  for (n in 1:T-1){
+    att_team_raw[n] ~ normal(att, sigma_att);
+    def_team_raw[n] ~ normal(def, sigma_def);
   }
   /*
   for (n in 1:N){
@@ -65,4 +54,4 @@ model {
   y_away ~ poisson_log(att_team[away_team_index] + def_team[home_team_index]);
   
 }
- 
+
