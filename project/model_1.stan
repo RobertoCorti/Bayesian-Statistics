@@ -44,14 +44,22 @@ model {
     att_team_raw[n] ~ normal(att, sigma_att);
     def_team_raw[n] ~ normal(def, sigma_def);
   }
-  /*
-  for (n in 1:N){
-    y_home[n] ~ poisson_log(home + att_team[home_team_index[n]] + def_team[away_team_index[n]]);
-    y_away[n] ~ poisson_log(att_team[away_team_index[n]] + def_team[home_team_index[n]]);
-  }*/
-  
+
   y_home ~ poisson_log(home + att_team[home_team_index] + def_team[away_team_index]);
   y_away ~ poisson_log(att_team[away_team_index] + def_team[home_team_index]);
   
+}
+
+generated quantities {
+  int<lower=0> y_home_rep[N];
+  int<lower=0> y_away_rep[N];
+  
+  for (n in 1:N) {
+    //real theta_home_n = home + att_team[home_team_index[n]] + def_team[away_team_index[n]];
+    y_home_rep[n] = poisson_log_rng(home + att_team[home_team_index[n]] + def_team[away_team_index[n]]);
+    
+    //real theta_away_n = att_team[away_team_index[n]] + def_team[home_team_index[n]];
+    y_away_rep[n] = poisson_log_rng(att_team[away_team_index[n]] + def_team[home_team_index[n]]);
+  }
 }
 

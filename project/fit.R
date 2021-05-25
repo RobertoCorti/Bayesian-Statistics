@@ -22,9 +22,12 @@ fit_model_1 <- sampling(comp_model_1, data = stan_dat_model_1)
 
 saveRDS(fit_model_1, "models/model_1_fit.rds")
 
-fit_model_1 <- readRDS("models/model_1_fit.rds")
 
+y_home_rep <- as.matrix(fit_model_1, pars = "y_home_rep")
+saveRDS(y_home_rep, "y_home_rep.rds")
 
-print(fit_model_1, pars = c('att_team','def_team','home'))
+y_away_rep <- as.matrix(fit_model_1, pars = "y_away_rep")
+saveRDS(y_away_rep, "y_away_rep.rds")
+
 
 
