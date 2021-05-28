@@ -26,8 +26,18 @@ saveRDS(fit_model_1, "models/model_1_fit.rds")
 y_home_rep <- as.matrix(fit_model_1, pars = "y_home_rep")
 saveRDS(y_home_rep, "y_home_rep.rds")
 
-y_away_rep <- as.matrix(fit_model_1, pars = "y_away_rep")
+y_away_rep <- as.matrix(fit_model_1, pars= "y_away_rep")
 saveRDS(y_away_rep, "y_away_rep.rds")
+
+
+# compile
+comp_model_2 <- stan_model('model_2.stan')
+# fit
+fit_model_2 <- sampling(comp_model_2, data = stan_dat_model_1)
+
+
+
+
 
 
 
