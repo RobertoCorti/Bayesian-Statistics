@@ -1,6 +1,8 @@
 library(rstan)
 library(bayesplot)
 
+setwd("../Desktop/Università/DSSC/Secondo_Anno/Bayesian_Statistics/Bayesian-Statistics/project/")
+
 # prepare data
 df <- readRDS("./data/season1991.rds")
 
@@ -33,7 +35,7 @@ saveRDS(y_away_rep, "y_away_rep.rds")
 # compile
 comp_model_2 <- stan_model('model_2.stan')
 # fit
-fit_model_2 <- sampling(comp_model_2, data = stan_dat_model_1)
+fit_model_2 <- sampling(comp_model_2, data = stan_dat_model_1, chain=4)
 
 
 
