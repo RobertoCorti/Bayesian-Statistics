@@ -27,7 +27,7 @@ transformed parameters{
   real sigma_def = inv(tau_def);
   
   vector[T] att_team = append_row(att_team_raw, -sum(att_team_raw));
-  vector[T] def_team = append_row(def_team_raw, -sum(att_team_raw));
+  vector[T] def_team = append_row(def_team_raw, -sum(def_team_raw));
 }
 
 

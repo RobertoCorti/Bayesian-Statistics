@@ -3,7 +3,60 @@ library(engsoccerdata)
 library(dplyr)
 library(tidyr)
 
+### functions
+ranking <- function(df){
+  
+  temp <-
+    rbind(
+      df %>% select(team=home, opp=visitor, GF=hgoal, GA=vgoal),
+      df %>% select(team=visitor, opp=home, GF=vgoal, GA=hgoal)
+    ) #rbind two copies of the orignal df, simply reversing home/away team for each match
+  
+  df_ranking_sim<-
+    temp %>%
+    mutate(GD = GF-GA) %>%
+    group_by(team) %>%
+    summarize(games_played = n(),
+              goals_made = sum(GF),
+              goals_received = sum(GA),
+              goals_difference = sum(GD),
+              wins = sum(GD>0),
+              draws = sum(GD==0),
+              losses = sum(GD<0)
+    ) %>%
+    mutate(Pts = (wins*2) + draws) %>%
+    arrange(desc(Pts))
+  
+  df_ranking_sim <- df_ranking_sim %>% mutate(position = as.integer(rank(desc(Pts))))
+  return(df_ranking_sim)
+}
+
+cum_points <- function(df){
+  
+  team_names <- sort(unique(df$home))
+  cum_points_list <- vector("list", length = length(team_names))
+  names(cum_points_list) <- team_names
+  
+  for (name in team_names) {
+    df_team <- df %>% 
+      filter(home==name | visitor==name) %>% 
+      select(Date=Date, home=home, visitor=visitor, hgoal=hgoal, vgoal=vgoal) %>% 
+      mutate(loc=ifelse(home==name, 1, 0)) %>%
+      mutate(DG =ifelse(loc==1, hgoal-vgoal, vgoal-hgoal)) %>% 
+      mutate(point=ifelse(DG>0, 2, ifelse(DG==0, 1, 0)))
+    
+    cum_points_list[[name]] <- cumsum(df_team$point)
+  }
+  
+  return(cum_points_list)
+}
+
+
+
+
 ### get data
+
+### 1991-92
 df <- engsoccerdata::italy
 
 df <- df %>% 
@@ -93,57 +146,36 @@ df <- df %>%
   mutate(visitor_rank = sapply(visitor, assign_rank))
 
 
-
-temp <-
-  rbind(
-    df %>% select(team=home, opp=visitor, GF=hgoal, GA=vgoal),
-    df %>% select(team=visitor, opp=home, GF=vgoal, GA=hgoal)
-  ) #rbind two copies of the orignal df, simply reversing home/away team for each match
-
-df_ranking<-
-  temp %>%
-  mutate(GD = GF-GA) %>%
-  group_by(team) %>%
-  summarize(games_played = n(),
-            goals_made = sum(GF),
-            goals_received = sum(GA),
-            goals_difference = sum(GD),
-            wins = sum(GD>0),
-            draws = sum(GD==0),
-            losses = sum(GD<0)
-  ) %>%
-  mutate(Pts = (wins*2) + draws) %>%
-  arrange(desc(Pts))
-
-df_ranking <- df_ranking %>% mutate(position = rank(desc(Pts)))
-
-
-cum_points <- function(df){
-  
-  team_names <- sort(unique(df$home))
-  cum_points_list <- vector("list", length = length(team_names))
-  names(cum_points_list) <- team_names
-  
-  for (name in team_names) {
-    df_team <- df %>% 
-      filter(home==name | visitor==name) %>% 
-      select(Date=Date, home=home, visitor=visitor, hgoal=hgoal, vgoal=vgoal) %>% 
-      mutate(loc=ifelse(home==name, 1, 0)) %>%
-      mutate(DG =ifelse(loc==1, hgoal-vgoal, vgoal-hgoal)) %>% 
-      mutate(point=ifelse(DG>0, 2, ifelse(DG==0, 1, 0)))
-    
-    cum_points_list[[name]] <- cumsum(df_team$point)
-  }
-  
-  return(cum_points_list)
-}
-
+df_ranking <- ranking(df)
 
 cum_points_list <- cum_points(df)
 
-remove(temp)
 
 saveRDS(df, file="data/season1991.rds")
 saveRDS(df_goals, file = "data/season1991_goals.rds")
 saveRDS(df_ranking, file="data/season1991_ranking.rds")
 saveRDS(cum_points_list, file="data/cum_points.rds")
+
+
+### 2007-08
+df <- engsoccerdata::italy
+
+df <- df %>% 
+  filter(Season == 2007)
+
+df <- df %>%
+  group_by(home) %>%
+  mutate(home_id=cur_group_id())
+
+df <- df %>%
+  group_by(visitor) %>%
+  mutate(visitor_id=cur_group_id())
+
+df_ranking <- ranking(df)
+
+cum_points_list <- cum_points(df)
+
+
+saveRDS(df, file="data/season2007.rds")
+saveRDS(df_ranking, file="data/season2007_ranking.rds")
+
