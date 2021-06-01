@@ -225,3 +225,9 @@ remove(df)
 remove(df_goals)
 remove(df_ranking)
 remove(cum_points_list)
+
+
+saveRDS(assign_rank_1991, file="functions/assign_rank_1991.rds")
+saveRDS(assign_rank_2007, file="functions/assign_rank_2007.rds")
+saveRDS(cum_points, file="functions/cum_points.rds")
+saveRDS(ranking, file="functions/ranking.rds")

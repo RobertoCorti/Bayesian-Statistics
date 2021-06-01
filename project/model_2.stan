@@ -56,20 +56,20 @@ model {
   
   //Priors on the random effects
   // group 1: bottom-table team
-  tau_att[1] ~ gamma(0.1, 0.1);
-  tau_def[1] ~ gamma(0.1, 0.1);
+  tau_att[1] ~ gamma(0.5, 0.5);
+  tau_def[1] ~ gamma(0.5, 0.5);
   att[1] ~ normal(-0.5, 0.25);
   def[1] ~ normal(0.5, 0.25);
   
   // group 2: mid-table teams
-  tau_att[2] ~ gamma(0.1, 0.1);
-  tau_def[2] ~ gamma(0.1, 0.1);
+  tau_att[2] ~ gamma(0.5, 0.5);
+  tau_def[2] ~ gamma(0.5, 0.5);
   att[2] ~ normal(0, 0.25);
   def[2] ~ normal(0, 0.25);
   
   // group 3: top-table teams
-  tau_att[3] ~ gamma(0.1, 0.1);
-  tau_def[3] ~ gamma(0.1, 0.1);
+  tau_att[3] ~ gamma(0.5, 0.5);
+  tau_def[3] ~ gamma(0.5, 0.5);
   att[3] ~ normal(0.5, 0.25);
   def[3] ~ normal(-0.5, 0.25);
   
