@@ -1,6 +1,7 @@
 library(dplyr)
 library(ggplot2)
 library(bayesplot)
+setwd("../Desktop/Università/DSSC/Secondo_Anno/Bayesian_Statistics/Bayesian-Statistics/project/")
 
 ## functions
 simulate_data <- function(df, y_home_rep, y_away_rep){
@@ -27,13 +28,18 @@ df <- readRDS("./data/season1991.rds")
 df_ranking <- readRDS("./data/season1991_ranking.rds")
 
 ### Model 1
-fit_model_1 <- readRDS("models/model_1_fit.rds")
+fit_model_1 <- readRDS("models/model_1_fit_1991.rds")
 y_home_rep <- readRDS("simulations/y_home_rep_model_1_1991.rds")
 y_away_rep <- readRDS("simulations/y_away_rep_model_1_1991.rds")
+loglik1_home <- as.matrix(fit_model_1, pars="log_lik_home")
+loglik1_away <- as.matrix(fit_model_1, pars="log_lik_away")
+
 df_sim1 <- simulate_data(df, y_home_rep = y_home_rep, y_away_rep = y_away_rep)
 df_ranking_sim1 <- ranking(df_sim1, point_per_win = 2)
 cum_points_list_sim1 <- cum_points(df_sim1)
 cum_points_list <- readRDS("data/season1991_cum_points.rds")
+
+
 
 
 
@@ -119,6 +125,10 @@ qplot(mean_y_rep, std_resid) + ggtitle("Away goals std res - Model 1", subtitle 
 fit_model_2 <- readRDS("models/model_2_fit_1991.rds")
 y_home_rep_2 <- readRDS("simulations/y_home_rep_model_2_1991.rds")
 y_away_rep_2 <- readRDS("simulations/y_away_rep_model_2_1991.rds")
+loglik2_home <- as.matrix(fit_model_2, pars="log_lik_home")
+loglik2_away <- as.matrix(fit_model_2, pars="log_lik_away")
+
+
 df_sim2 <- simulate_data(df, y_home_rep = y_home_rep_2, y_away_rep = y_away_rep_2)
 df_ranking_sim2 <- ranking(df_sim2, point_per_win = 2)
 cum_points_list_sim2 <- cum_points(df_sim2)
@@ -225,6 +235,10 @@ for (team in sort(unique(df$home))) {
          col=c("black", "red", "blue"), lty=1:1, lwd=2:2)
 }
 
+library(loo)
+
+
+
 
 ################################
 
@@ -240,6 +254,8 @@ y_home_rep <- readRDS("simulations/y_home_rep_model_1_2007.rds")
 y_away_rep <- readRDS("simulations/y_away_rep_model_1_2007.rds")
 df_sim1 <- simulate_data(df, y_home_rep = y_home_rep, y_away_rep = y_away_rep)
 df_ranking_sim1 <- ranking(df_sim1, point_per_win = 3)
+loglik1_home <- as.matrix(fit_model_1, pars="log_lik_home")
+loglik1_away <- as.matrix(fit_model_1, pars="log_lik_away")
 cum_points_list_sim1 <- cum_points(df_sim1)
 cum_points_list <- readRDS("data/season2007_cum_points.rds")
 
@@ -441,3 +457,109 @@ for (team in sort(unique(df$home))) {
 }
 
 
+#################################################
+
+library(loo)
+
+loo1_home <- loo(loglik1_home)
+loo2_home <- loo(loglik2_home)
+
+elpdi1 <- loo1_home$pointwise[, "elpd_loo"]
+elpdi2 <- loo2_home$pointwise[, "elpd_loo"]
+
+elpd_diffs <-
+  data.frame(
+    home = df$home,
+    visitor=df$visitor,
+    FT = df$FT,
+    diff12 = elpdi2 - elpdi1
+  )
+
+assign_rank_1991 <- readRDS("functions/assign_rank_1991.rds")
+
+assign_position_1991 <- function(team){
+  df_ranking_1991 <- readRDS("data/season1991_ranking.rds")
+  return(df_ranking_1991[df_ranking_1991$team == team, ]$position)
+}
+
+elpd_diffs <- elpd_diffs %>% 
+  mutate(team_rank = sapply(home, assign_rank_1991), team_pos=sapply(home, assign_position_1991))
+
+elpd_diffs <- elpd_diffs %>% 
+  arrange(team_rank, team_pos) %>%
+  mutate(
+    big_diff12 = abs(diff12) > 6,
+    Index = 1:n()
+  )
+
+theme_set(bayesplot::theme_default(base_size = 14))
+theme_update(axis.text = element_text(size = 16))
+
+elpd_diff_plot <- ggplot(elpd_diffs, aes(x = Index,y = diff12)) + 
+  geom_point(
+    aes(colour = factor(team_rank)), 
+    size = 3, 
+    alpha = 0.8
+  ) + 
+  #scale_color_manual(
+  #  values = 
+  #    c("top" = "#00C094",
+  #      "medium" = "#FB61D7",
+  #      "bottom" = "#00B6EB")
+  #) +
+  hline_0(size = 0.25) +
+  ylab(expression(ELPD[i][2] - ELPD[i][1])) +
+  labs(color='Team category') +
+  #legend_none() +
+  ggtitle("Goals home - Difference in pointwise ELPD Model 1 and Model 2", subtitle = "Serie A 1991-92")
+
+plot(elpd_diff_plot)
+ggsave(filename = "plots/loo_elpd_diff_12_home.png", width = 7.5, height = 5.75)
+
+loo1_away <- loo(loglik1_away)
+loo2_away <- loo(loglik2_away)
+
+elpdi1 <- loo1_away$pointwise[, "elpd_loo"]
+elpdi2 <- loo2_away$pointwise[, "elpd_loo"]
+
+elpd_diffs <-
+  data.frame(
+    home = df$home,
+    visitor=df$visitor,
+    FT = df$FT,
+    diff12 = elpdi2 - elpdi1
+  )
+
+elpd_diffs <- elpd_diffs %>% 
+  mutate(team_rank = sapply(visitor, assign_rank_1991), team_pos=sapply(visitor, assign_position_1991))
+
+elpd_diffs <- elpd_diffs %>% 
+  arrange(team_rank, visitor) %>%
+  mutate(
+    big_diff12 = abs(diff12) > 6,
+    Index = 1:n()
+  )
+
+theme_set(bayesplot::theme_default(base_size = 14))
+theme_update(axis.text = element_text(size = 16))
+
+elpd_diff_plot <- ggplot(elpd_diffs, aes(x = Index,y = diff12)) + 
+  geom_point(
+    aes(colour = factor(team_rank)), 
+    size = 3, 
+    alpha = 0.8
+  ) + 
+  #scale_color_manual(
+  #  values = 
+  #    c("top" = "#00C094",
+  #      "medium" = "#FB61D7",
+  #      "bottom" = "#00B6EB")
+  #) +
+  hline_0(size = 0.25) +
+  ylab(expression(ELPD[i][2] - ELPD[i][1])) +
+  labs(color='Team category') +
+  #legend_none() +
+  ggtitle("Goals away - Difference in pointwise ELPD Model 1 and Model 2", subtitle = "Serie A 1991-92")
+
+plot(elpd_diff_plot)
+ggsave(filename = "plots/loo_elpd_diff_12_away.png", width = 7.5, height = 5.75)

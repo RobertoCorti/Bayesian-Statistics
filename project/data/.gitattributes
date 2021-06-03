@@ -1,0 +1,9 @@
+season1991_cum_points.rds filter=lfs diff=lfs merge=lfs -text
+season1991_goals.rds filter=lfs diff=lfs merge=lfs -text
+season2007.rds filter=lfs diff=lfs merge=lfs -text
+season2007_goals.rds filter=lfs diff=lfs merge=lfs -text
+cum_points.rds filter=lfs diff=lfs merge=lfs -text
+season1991.rds filter=lfs diff=lfs merge=lfs -text
+season1991_ranking.rds filter=lfs diff=lfs merge=lfs -text
+season2007_cum_points.rds filter=lfs diff=lfs merge=lfs -text
+season2007_ranking.rds filter=lfs diff=lfs merge=lfs -text

@@ -36,10 +36,23 @@ remove(fit_model_1)
 remove(y_home_rep)
 remove(y_away_rep)
 
+alpha <- readRDS("dirichlet_hyper1991.rds")
+
+stan_dat_model_2 <- list(
+  N = nrow(df), 
+  T = length(unique(df$home)),
+  y_home = df$hgoal,
+  y_away = df$vgoal,
+  home_team_index = df$home_id,
+  away_team_index = df$visitor_id,
+  alpha = alpha
+)
+str(stan_dat_model_2)
+
 # compile
 comp_model_2 <- stan_model('model_2.stan')
 # fit
-fit_model_2 <- sampling(comp_model_2, data = stan_dat_model_1, iter=10000)
+fit_model_2 <- sampling(comp_model_2, data = stan_dat_model_2, iter=5000)
 saveRDS(fit_model_2, "models/model_2_fit_1991.rds")
 
 y_home_rep <- as.matrix(fit_model_2, pars = "y_home_rep")
@@ -81,10 +94,23 @@ remove(fit_model_1)
 remove(y_home_rep)
 remove(y_away_rep)
 
+alpha <- readRDS("dirichlet_hyper2007.rds")
+
+stan_dat_model_2 <- list(
+  N = nrow(df), 
+  T = length(unique(df$home)),
+  y_home = df$hgoal,
+  y_away = df$vgoal,
+  home_team_index = df$home_id,
+  away_team_index = df$visitor_id,
+  alpha = alpha
+)
+str(stan_dat_model_2)
+
 # compile
 comp_model_2 <- stan_model('model_2.stan')
 # fit
-fit_model_2 <- sampling(comp_model_2, data = stan_dat_model_1, chain=4, iter=10000)
+fit_model_2 <- sampling(comp_model_2, data = stan_dat_model_2, chain=4, iter=5000)
 saveRDS(fit_model_2, "models/model_2_fit_2007.rds")
 
 y_home_rep <- as.matrix(fit_model_2, pars = "y_home_rep")

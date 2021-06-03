@@ -51,14 +51,19 @@ model {
 }
 
 generated quantities {
+  
   int<lower=0> y_home_rep[N];
   int<lower=0> y_away_rep[N];
   
+  vector[N] log_lik_home;
+  vector[N] log_lik_away;
+  
   for (n in 1:N) {
-    //real theta_home_n = home + att_team[home_team_index[n]] + def_team[away_team_index[n]];
+    
+    log_lik_home[n] = poisson_log_lpmf(y_home[n] | home + att_team[home_team_index[n]] + def_team[away_team_index[n]]);
     y_home_rep[n] = poisson_log_rng(home + att_team[home_team_index[n]] + def_team[away_team_index[n]]);
     
-    //real theta_away_n = att_team[away_team_index[n]] + def_team[home_team_index[n]];
+    log_lik_away[n] = poisson_log_lpmf(y_away[n] | att_team[away_team_index[n]] + def_team[home_team_index[n]]);
     y_away_rep[n] = poisson_log_rng(att_team[away_team_index[n]] + def_team[home_team_index[n]]);
   }
 }
