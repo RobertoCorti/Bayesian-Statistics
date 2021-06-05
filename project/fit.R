@@ -36,7 +36,7 @@ remove(fit_model_1)
 remove(y_home_rep)
 remove(y_away_rep)
 
-alpha <- readRDS("dirichlet_hyper1991.rds")
+alpha <- readRDS("functions/dirichlet_hyper1991.rds")
 
 stan_dat_model_2 <- list(
   N = nrow(df), 
@@ -81,7 +81,7 @@ str(stan_dat_model_1)
 comp_model_1 <- stan_model('model_1.stan')
 
 # fit
-fit_model_1 <- sampling(comp_model_1, data = stan_dat_model_1, iter=10000)
+fit_model_1 <- sampling(comp_model_1, data = stan_dat_model_1, iter=7000)
 saveRDS(fit_model_1, "models/model_1_fit_2007.rds")
 
 y_home_rep <- as.matrix(fit_model_1, pars = "y_home_rep")
@@ -94,7 +94,7 @@ remove(fit_model_1)
 remove(y_home_rep)
 remove(y_away_rep)
 
-alpha <- readRDS("dirichlet_hyper2007.rds")
+alpha <- readRDS("functions/dirichlet_hyper2007.rds")
 
 stan_dat_model_2 <- list(
   N = nrow(df), 
@@ -110,7 +110,7 @@ str(stan_dat_model_2)
 # compile
 comp_model_2 <- stan_model('model_2.stan')
 # fit
-fit_model_2 <- sampling(comp_model_2, data = stan_dat_model_2, chain=4, iter=5000)
+fit_model_2 <- sampling(comp_model_2, data = stan_dat_model_2, chain=4, iter=8000)
 saveRDS(fit_model_2, "models/model_2_fit_2007.rds")
 
 y_home_rep <- as.matrix(fit_model_2, pars = "y_home_rep")

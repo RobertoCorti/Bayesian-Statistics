@@ -25,8 +25,6 @@ parameters {
   real def_medium;
   real<lower=-3, upper=0> def_top;
   
-  //real att[3];
-  //real def[3];
   
   real<lower=0> sigma_att[3];
   real<lower=0> sigma_def[3];
@@ -61,27 +59,20 @@ model {
   sigma_def[1] ~ inv_gamma(1, 1);
   att_bottom ~ normal(0, 0.5);
   def_bottom ~ normal(0, 0.5);
-  //att[1] ~ normal(-0.5, 0.25);
-  //def[1] ~ normal(0.5, 0.25);
+  
   
   // group 2: mid-table teams
   sigma_att[2] ~ inv_gamma(1, 1);
   sigma_def[2] ~ inv_gamma(1, 1);
-  att_medium ~ normal(0, 0.5);
-  def_medium ~ normal(0, 0.5);
-  //att[2] ~ normal(0, 0.25);
-  //def[2] ~ normal(0, 0.25);
+  att_medium ~ normal(0, 0.25);
+  def_medium ~ normal(0, 0.25);
   
   // group 3: top-table teams
   sigma_att[3] ~ inv_gamma(1, 1);
   sigma_def[3] ~ inv_gamma(1, 1);
   att_top ~ normal(0, 0.5);
   def_top ~ normal(0, 0.5);
-  //att[3] ~ normal(0.5, 0.25);
-  //def[3] ~ normal(-0.5, 0.25);
   
-  //print(sigma_att);
-  //print(sigma_def);
   home ~ normal(0, 1000);
   
    for(t in 1:T){
@@ -97,12 +88,6 @@ model {
     contributions_att[3] = log(pi_att[t,3]) + student_t_lpdf(att_team_raw[t] | 4, att_top, sigma_att[3]);
     contributions_def[3] = log(pi_def[t,3]) + student_t_lpdf(def_team_raw[t] | 4, def_top, sigma_def[3]);
     
-    /*
-    for(k in 1:3){
-      contributions_att[k] = log(pi_att[t,k]) + student_t_lpdf(att_team_raw[t] | 4, att[k], sigma_att[k]);
-      contributions_def[k] = log(pi_def[t,k]) + student_t_lpdf(def_team_raw[t] | 4, def[k], sigma_def[k]);
-    }*/
-    
     target += log_sum_exp(contributions_att);
     target += log_sum_exp(contributions_def);
     
@@ -116,8 +101,6 @@ model {
 		y_away[n] ~ poisson_log(l_theta_temp[2]);
     
   }
-  //y_home ~ poisson_log(home + att_team[home_team_index] + def_team[away_team_index]);
-  //y_away ~ poisson_log(att_team[away_team_index] + def_team[home_team_index]);
   
 }
 
