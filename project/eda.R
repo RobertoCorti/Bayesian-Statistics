@@ -2,11 +2,12 @@ library(ggplot2)
 library(dplyr)
 library(cowplot)
 library(grid)
+library(tidyr)
 
 ### 1991-92
 
 df <- readRDS("./data/season1991.rds")
-df_goals <- readRDS("./data/season1991_goals.rds")
+df_goals <- readRDS("data/season1991_goals.rds")
 
 
 hgoal_hist <- ggplot(df, aes(x = hgoal)) + 
@@ -81,6 +82,7 @@ ggplot(df_goals_long, aes(x = team_name, y = Value, fill = Stat)) +
   geom_text(aes(label = Value), size = 5, position = position_stack(vjust = 0.5))+
   ggtitle("Do teams score more at home?", subtitle="Distribution of goals in Serie A 1991-1992")+
   labs(x="Team", y="Number of goals")+
+  theme_classic()+
   scale_fill_discrete(
     labels = c("Goals made at home", "Goals made away")
   )+

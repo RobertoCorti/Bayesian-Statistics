@@ -1,0 +1,109 @@
+---
+title: "Bayesian Statistics exam - Bayesian hierarchical model for fotball results"
+author: "Roberto Corti"
+date: "5/6/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Introduction
+
+Being one of the most popular sports in the world, in recent years football data analysis has become an interesting field of study. The aim of this project is to replicate the work of Baio, G., Blangiardo, M. (2010), that propose a Bayesian model for modeling the number of goals scored during a football match. In order to compare the results with the ones of this work, all the analysis has been conducted by using the data about the Italian Serie A championship 1991-1992. 
+
+All the work is done by the use of `rstan` package, that was used for fitting the models, posterior evaluation and model checking.
+
+
+### Exploratory data analysis
+
+For collecting the data, the R package `engsoccerdata` was used. This dataset contains many of the results for National Leagues, European Cup and Champions League matches (including qualifiers) from 1871 to 2016. The section `italy` consists of 25404 match-observations on the following 8 variables:
+
+* `Date` Date of match
+* `Season` Season of match - refers to starting year
+* `home` Home team
+* `visitor` Visiting team
+* `FT` Full-time result at 90 mins
+* `hgoal` home goals at FT 90mins
+* `vgoal` visitor goals at FT 90mins
+* `tier` tier of football pyramid: 1
+
+```{r, warning=FALSE, message=FALSE}
+library(engsoccerdata)
+library(dplyr)
+library(tidyr)
+
+df <- engsoccerdata::italy
+str(df)
+```
+
+
+As previously cited, since the aim is to replicate the study of Baio, G., Blangiardo, M. (2010), all the data analysis will be conducted by using the data of the Italian championship 1991-1992. Hence, from we must filter from this collection all the 306 matches of that season:
+
+```{r}
+df <- engsoccerdata::italy
+
+df <- df %>% 
+        filter(Season == 1991)
+
+df <- df %>%
+  group_by(home) %>%
+  mutate(home_id=cur_group_id())
+
+df <- df %>%
+  group_by(visitor) %>%
+  mutate(visitor_id=cur_group_id())
+
+df
+```
+
+Once provided a proper dataset that summarizes all the matches, the first step is to extract from it some useful information.
+
+* The first question that arises by aiming to model the number of goals in a football match is to understand if there is a difference in the tendency to score a goal between the local team and the visitor team. From many football experts it is well known that playing at home can be affect positively, thanks to the support of the fans. Let's check if that is also true in our dataset:
+
+
+
+
+
+
+
+![](C:/Users/roby2/OneDrive/Desktop/Università/DSSC/Secondo_Anno/Bayesian_Statistics/Bayesian-Statistics/project/plots/results_1991.png)
+
+
+
+```{r}
+wins_home <- nrow(df[df$hgoal > df$vgoal, ]);
+tied_games <-  nrow(df[df$hgoal == df$vgoal, ]);
+wins_away <- nrow(df[df$hgoal < df$vgoal, ])
+
+data_wins <- data.frame (nwins  = c("home", "draw", "visitor"),
+                         number = c(wins_home, tied_games, wins_away)
+)
+
+print(paste0("Number of games won by the home team: ", data_wins$number[1]))
+print(paste0("Number of games won by the visitor team: ", data_wins$number[2]))
+print(paste0("Number of games finished in draw: ", data_wins$number[3]))
+```
+
+
+
+
+![](C:/Users/roby2/OneDrive/Desktop/Università/DSSC/Secondo_Anno/Bayesian_Statistics/Bayesian-Statistics/project/plots/hgoal_vgoal_1991.png)
+
+
+
+![](C:/Users/roby2/OneDrive/Desktop/Università/DSSC/Secondo_Anno/Bayesian_Statistics/Bayesian-Statistics/project/plots/goals_home_1991.png)
+
+
+
+
+### Model
+
+### MCMC diagnostic
+
+### Model evaluation
+
+### Predictive model comparison
+
+### Conclusions

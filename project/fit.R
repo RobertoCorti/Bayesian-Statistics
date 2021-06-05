@@ -2,6 +2,7 @@ library(rstan)
 library(bayesplot)
 options(mc.cores=4)
 setwd("../Desktop/Università/DSSC/Secondo_Anno/Bayesian_Statistics/Bayesian-Statistics/project/")
+
 ## fit 1991/92
 
 # prepare data
