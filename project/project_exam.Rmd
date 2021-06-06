@@ -204,14 +204,13 @@ During the exploratory data analysis we viewed that attack and defense skills ca
 
 The following model considers the same assumptions for the number goals distribution and the home effect; the random parameters are instead modelled differently. There are allowed three different generating mechanism: one for top teams, one for middle-table team and one for bottom-table team.
 For each team it is defined a vector of probabilities $\pi^{att}_t = (\pi^{att}_{t,1}, \pi^{att}_{t,2}, \pi^{att}_{t,3})$ and $\pi^{def}_t = (\pi^{def}_{t,1}, \pi^{def}_{t,2}, \pi^{def}_{t,3})$ that identify the probability that the attack and the defense ability of the team is one of the three categories. Then, the attack and defense parameters are modelled as a multimodal distribution:
+$$ att_t = \sum_{k=1}^3 \pi^{att}_{t,k} ~ \text{nct}(\mu^{att}_k, \sigma^{att}_k, \nu=4), ~ ~  ~ ~  ~ ~ ~ ~ ~ ~ ~ ~ def_t = \sum_{k=1}^3 \pi^{def}_{t,k} ~ \text{nct}(\mu^{def}_k, \sigma^{def}_k, \nu=4). $$
 
-$$ att_t = \sum_{k=1}^3 \pi^{att}_{t,k} ~ \text{nct}(\mu^{att}_k, \tau^{att}_k, \nu), ~ ~  ~ ~  ~ ~ ~ ~ ~ ~ ~ ~ def_t = \sum_{k=1}^3 \pi^{def}_{t,k} ~ \text{nct}(\mu^{def}_k, \tau^{def}_k, \nu). $$
-
-where $\mu^{att}_k, \tau^{att}_k, \mu^{def}_k, \tau^{def}_k$ for $k=1,2,3$ are the population mean and precision of the attack and defense effects of the three team categories.
+where $\mu^{att}_k, \sigma^{att}_k, \mu^{def}_k, \sigma^{def}_k$ for $k=1,2,3$ are the population mean and precision of the attack and defense effects of the three team categories.
 
 ### Model implementation and results
 
-Once introduced the models theoritecally, we need to implement them, specifying a prior disttibution for the parameters, fitting on the Serie A 1991-92 data and compare the results with the ones of Baio, G., Blangiardo, M. (2010).
+Once introduced the models theoretically, we need to implement them, specifying a prior distribution for the parameters, fitting on the Serie A 1991-92 data and compare the results with the ones of Baio, G., Blangiardo, M. (2010).
 
 Both models have been implemented with the `rstan` package and fitted by using Hamiltonian Monte Carlo.
 
@@ -219,7 +218,7 @@ Both models have been implemented with the `rstan` package and fitted by using H
 
 [Stan code](https://github.com/RobertoCorti/Bayesian-Statistics/blob/main/project/model_1.stan)
 
-As suggested in Baio, G., Blangiardo, M. (2010), the prior distributions for the hyper-parameters and the home effect are modelled indipendently by using non-informative prior distributions:
+As done in Baio, G., Blangiardo, M. (2010), the prior distributions for the hyper-parameters and the home effect are modeled independently by using non-informative prior distributions:
 
 $$ home \sim \mathcal{N}(0, 1000) $$
 
@@ -271,13 +270,82 @@ kable(summary_model_1_home_df)
 All the intervals are in accordance with the ones reported in Baio, G., Blangiardo, M. (2010).
 The home effect is positive and this is coherent with the fact seen before that the majority of wins are made by the home team. AC Milan, the league winner, have the highest propensity to score. The top three clubs (AC Milan, Juventus and Torino) results the best ones in terms of defense showing the lowest values for the parameter $def$, while Ascoli, Foggia and Verona showed the highest propensity to concede goals by having the highest values of $def$.
 
+
+
 #### Model 2 
 
+[Stan code](https://github.com/RobertoCorti/Bayesian-Statistics/blob/main/project/model_2.stan)
+
+By aiming to to represent different types of team behaviors, this model requires a huge increase in the number of parameters to fit. In this context using a non-informative prior can lead a very vague posterior distribution, since the information can't be enough. For this reason, it was made the decision to use informative priors based on past experience and knowledge of the parameters of interests.
+
+Starting from the team-probabilities parameters $\pi^{att}_t, \pi^{def}_t$, a Dirichlet distribution is adopted:
+$$ \pi^{att}_t \sim \text{Dirichlet}(\alpha_t), ~ ~  ~ ~  ~ ~ ~ ~ ~ ~ ~   \pi^{def}_t \sim \text{Dirichlet}(\alpha_t) $$
+The hyper-parameters vectors $\alpha_t \in (\mathbb{R}^+)^3$ are taken uniform equal to $(1, 1, 1)$ by Baio, G., Blangiardo, M. (2010) in order to specify no information on the prior probability that a given team is one of the three categories. It is possible to specify a more informative prior distribution by looking to the recent history of each team in the past Serie A championships. Based on that idea, the specification of the hyper-parameters vectors $\alpha_t$ is made in the following way:
+
+* for each $k=1, 2, 3, ~ ~ ~ ~ \alpha_{t,k} = 1 + n_{t,k}$, where $n_{t,k}$ is the number of times that the $t$-th team has appeared in the last 5 seasons in the $k$-th part of the table. 
+
+In this way, for example, a team like AC Milan or Juventus that have always been in the top-6 positions in the last 5 campaigns prior to 1991, will have a $\mathbb{E}[\pi^{att}_{t,top}] = \mathbb{E}[\pi^{def}_{t,top}] = 6/8 \simeq  0.76$ . This prior information can help the model to "detect" which kind of team belong to one of the three categories, since historically teams that are used to finish at the top will also have more financial possibilities for acquiring the best players in the market.
+
+For what concerns the prior distribution of the population parameters $\mu^{att}_k, \sigma^{att}_k, \mu^{def}_k, \sigma^{def}_k$ it is assumed that:
+* the offensive contribution for top-table clubs must be positive, while the defensive contribution has to be negative,
+* the offensive contribution for bottom-table clubs must be negative, while the defensive contribution has to be positive.
+
+Moreover, in order to add more information, it has been seen from the first model that location parameters are very rare to get values greater than $0.5$. Therefore, the following prior distribution have been selected:
+
+* **bottom-table teams**: 
+$$ \mu^{att}_{1} \sim \text{TruncNormal}(0, 1, -3, 0),   ~ ~ ~ ~ \sigma^{att}_{1} \sim \text{InvGamma}(0.1, 0.1), $$
+$$ \mu^{def}_{1} \sim \text{TruncNormal}(0, 1, 0, 3),   ~ ~ ~ ~ \sigma^{def}_{1} \sim \text{InvGamma}(0.1, 0.1). $$
+* **medium-table teams**: 
+$$ \mu^{att}_{2} \sim \text{Normal}(0, 0.5),   ~ ~ ~ ~ \sigma^{att}_{2} \sim \text{InvGamma}(0.1, 0.1), $$
+$$ \mu^{def}_{2} \sim \text{Normal}(0, 0.5),   ~ ~ ~ ~ \sigma^{def}_{2} \sim \text{InvGamma}(0.1, 0.1). $$
+* **top-table teams**: 
+$$ \mu^{att}_{3} \sim \text{TruncNormal}(0, 1, 0, 3),   ~ ~ ~ ~ \sigma^{att}_{3} \sim \text{InvGamma}(0.1, 0.1), $$
+$$ \mu^{def}_{3} \sim \text{TruncNormal}(0, 1, -3, 0),   ~ ~ ~ ~ \sigma^{def}_{3} \sim \text{InvGamma}(0.1, 0.1). $$
+As made with Model 1, the following tables report the 95% credible intervals for the team attack, defense and home parameters:
+
+**Attack**
+
+```{r, echo=FALSE}
+
+fit_model_2 <- readRDS("models/model_2_fit_1991.rds")
+
+summary_model_2_att <- rstan::summary(fit_model_2, pars=c("att_top", "att_medium", "att_bottom", "att_team"))
+summary_model_2_att_df <-  as.data.frame(summary_model_2_att$summary) %>%
+                                select(-c(se_mean, sd, "25%", "75%", n_eff, Rhat))
+
+rownames(summary_model_2_att_df) <- c("mu_att_top", "mu_att_medium", "mu_att_bottom", sort(unique(df$home)))
+
+kable(summary_model_2_att_df)
+```
+**Defense**
+```{r, echo=FALSE}
+
+summary_model_2_def <- rstan::summary(fit_model_2, pars=c("def_top", "def_medium", "def_bottom", "def_team"))
+summary_model_2_def_df <-  as.data.frame(summary_model_2_def$summary) %>%
+                                select(-c(se_mean, sd, "25%", "75%", n_eff, Rhat))
+
+rownames(summary_model_2_def_df) <- c("mu_def_top", "mu_def_medium", "mu_def_bottom", sort(unique(df$home)))
+
+kable(summary_model_2_def_df)
+```
+
+**Home**
+```{r, echo=FALSE}
 
 
+summary_model_2_home <- rstan::summary(fit_model_2, pars=c("home"))
+summary_model_2_home_df <-  as.data.frame(summary_model_2_home$summary) %>%
+                                 select(-c(se_mean, sd, "25%", "75%", n_eff, Rhat))
+
+
+kable(summary_model_2_home_df)
+```
+With respect to Model 1, also in this case the home factor is considered an advantage, the league winner (AC Milan) has the best propensity to score and worst team (Ascoli Calcio, Hellas Verona, US Cremonese) are willing to conceed a lot of goals. The difference that can be noticed is in the absolute magnitude of attack and defense parameters that seems more biased based towards their category. In particular, with respect to Model 1, worst teams of the league looks to be more penalized, while top-teams tend to be more rewarded.  
 
 
 ### Model evaluation
+
+In addition to parameters estimates, the procedure taken by the the `rstan` package allow the possibility to generate in-sample replications of the goals scored by the home and visitor team during every match of the championship. These simulated values from the joint posterior predictive distribution can be used to compare these samples to the observed data.  
 
 ### Predictive model comparison
 

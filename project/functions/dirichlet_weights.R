@@ -31,12 +31,12 @@ ranking <- function(df, point_per_win){
   return(df_ranking_sim)
 }
 
-last_5_positions <- function(team, current_year){
+last_5_positions <- function(team, current_year, points_per_win){
   positions <- rep(0, 3)
   for (i in 1:5) {
     df_temp <- engsoccerdata::italy %>% 
                  filter(Season == current_year-i)
-    df_temp_rank <- ranking(df_temp, point_per_win = 2)
+    df_temp_rank <- ranking(df_temp, point_per_win = points_per_win)
     
     if (team %in% unique(df_temp_rank$team)){
       position <- df_temp_rank[df_temp_rank$team == team, ]$position
@@ -60,7 +60,7 @@ last_5_positions <- function(team, current_year){
 }
 
 
-assign_dir_hyp <- function(year){
+assign_dir_hyp <- function(year, points_per_win){
   
   df <- engsoccerdata::italy %>% 
               filter(Season == year)
@@ -71,7 +71,7 @@ assign_dir_hyp <- function(year){
   
   for (i in 1:length(team_names)) {
     
-    last_5_years <- last_5_positions(team = team_names[i], current_year = year)
+    last_5_years <- last_5_positions(team = team_names[i], current_year = year, points_per_win)
     
     for (k in 1:3) {
       hyps[i,k] <- 1+last_5_years[k]
@@ -83,8 +83,8 @@ assign_dir_hyp <- function(year){
   
 }
 
-dirichlet_hyper_1991 <- assign_dir_hyp(year=1991)
-dirichlet_hyper_2007 <- assign_dir_hyp(year=2007)
+dirichlet_hyper_1991 <- assign_dir_hyp(year=1991, points_per_win = 2)
+dirichlet_hyper_2007 <- assign_dir_hyp(year=2007, points_per_win = 3)
 
 
 saveRDS(dirichlet_hyper_1991, "functions/dirichlet_hyper1991.rds")
