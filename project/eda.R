@@ -66,8 +66,17 @@ ggplot(df_goals,  aes(x=goals_received, y=goals_made, colour=rank)) +
   geom_text(aes(label=team_name),hjust=0, vjust=0) +
   annotation_custom(grob)+
   geom_abline(slope = 1, intercept = 0, color="black", linetype="dashed", size=1.5, alpha=0.2)+
+  ggtitle("Total goals made vs received", subtitle="Serie A 1991-1992")+
+  labs(x="Goals received", y="Goals made")+
+  theme_bw()
+
+ggplot(df_goals,  aes(x=goals_received_visitor, y=goals_made_visitor, colour=rank)) + 
+  geom_point(size=3) +
+  geom_text(aes(label=team_name),hjust=0, vjust=0) +
+  annotation_custom(grob)+
+  geom_abline(slope = 1, intercept = 0, color="black", linetype="dashed", size=1.5, alpha=0.2)+
   
-  ggtitle("Goals distrubution", subtitle="Serie A 1991-1992")+
+  ggtitle("Visitor goals made vs received", subtitle="Serie A 1991-1992")+
   labs(x="Goals received", y="Goals made")+
   theme_bw()
 
@@ -206,13 +215,13 @@ ggplot(data=data_wins, aes(x=nwins, y=number)) +
 grob <- grobTree(textGrob("Goals made = Goals received", x=0.70,  y=0.76, hjust=0,
                           gp=gpar(col="black", fontsize=13, alpha=0.4)))
 
-ggplot(df_goals,  aes(x=goals_received, y=goals_made, colour=rank)) + 
+ggplot(df_goals,  aes(x=goals_received_home, y=goals_made_home, colour=rank)) + 
   geom_point(size=3) +
   geom_text(aes(label=team_name),hjust=0, vjust=0) +
   annotation_custom(grob)+
   geom_abline(slope = 1, intercept = 0, color="black", linetype="dashed", size=1.5, alpha=0.2)+
   
-  ggtitle("Goals distrubution", subtitle="Serie A 2007-2008")+
+  ggtitle("Home goals made vs home goals received", subtitle="Serie A 2007-2008")+
   labs(x="Goals received", y="Goals made")+
   theme_bw()
 

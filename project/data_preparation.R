@@ -27,7 +27,8 @@ ranking <- function(df, point_per_win){
     mutate(Pts = (wins*point_per_win) + draws) %>%
     arrange(desc(Pts))
   
-  df_ranking_sim <- df_ranking_sim %>% mutate(position = as.integer(rank(desc(Pts))))
+  df_ranking_sim <- df_ranking_sim %>% mutate(position = 1:n())
+  #df_ranking_sim <- df_ranking_sim %>% mutate(position = as.integer(rank(desc(Pts))))
   return(df_ranking_sim)
 }
 
@@ -112,13 +113,12 @@ data_goals <- function(df){
 
 assign_rank_1991 <- function(name, df_ranking){
   if(name %in% c("AC Milan", "Juventus",
-                 "Torino FC", "SSC Napoli",
-                 "AS Roma", "Sampdoria") ){
+                 "Torino FC", "SSC Napoli") ){
     return("top")
   }
-  else if (name %in% c("Parma AC", "Inter",
+  else if (name %in% c("AS Roma", "Sampdoria","Parma AC", "Inter",
                        "US Foggia", "Lazio Roma",
-                       "Atalanta", "ACF Fiorentina") ){
+                       "Atalanta", "ACF Fiorentina", "Cagliari Calcio") ){
     return("medium")
   }
   else

@@ -3,17 +3,21 @@ title: "Bayesian Statistics exam - Bayesian hierarchical model for fotball resul
 author: "Roberto Corti"
 date: "5/6/2021"
 output: html_document
+header-includes:
+- \usepackage{caption}
+- \usepackage{multirow}
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+##### [Source code](https://github.com/RobertoCorti/Bayesian-Statistics/tree/main/project)
+
 ### Introduction
 
 Being one of the most popular sports in the world, in recent years football data analysis has become an interesting field of study. The aim of this project is to replicate the work of Baio, G., Blangiardo, M. (2010), that propose a Bayesian model for modeling the number of goals scored during a football match. In order to compare the results with the ones of this work, all the analysis has been conducted by using the data about the Italian Serie A championship 1991-1992. 
 
-All the work is done by the use of `rstan` package, that was used for fitting the models, posterior evaluation and model checking.
 
 
 ### Exploratory data analysis
@@ -29,19 +33,22 @@ For collecting the data, the R package `engsoccerdata` was used. This dataset co
 * `vgoal` visitor goals at FT 90mins
 * `tier` tier of football pyramid: 1
 
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, echo=FALSE, message=FALSE}
 library(engsoccerdata)
 library(dplyr)
 library(tidyr)
+library(knitr)
+library(rstan)
+
 
 df <- engsoccerdata::italy
-str(df)
+kable(head(df))
 ```
 
 
-As previously cited, since the aim is to replicate the study of Baio, G., Blangiardo, M. (2010), all the data analysis will be conducted by using the data of the Italian championship 1991-1992. Hence, from we must filter from this collection all the 306 matches of that season:
+As previously cited, since the aim is to replicate the study of Baio, G., Blangiardo, M. (2010), all the data analysis will be conducted by using the data of the Italian championship 1991-1992. 
 
-```{r}
+```{r, echo=FALSE}
 df <- engsoccerdata::italy
 
 df <- df %>% 
@@ -55,52 +62,220 @@ df <- df %>%
   group_by(visitor) %>%
   mutate(visitor_id=cur_group_id())
 
-df
+kable(head(df))
 ```
 
 Once provided a proper dataset that summarizes all the matches, the first step is to extract from it some useful information.
 
-* The first question that arises by aiming to model the number of goals in a football match is to understand if there is a difference in the tendency to score a goal between the local team and the visitor team. From many football experts it is well known that playing at home can be affect positively, thanks to the support of the fans. Let's check if that is also true in our dataset:
+
+The first question that may arise by aiming to model the number of goals in a football match is to understand if there is any difference between local and visitor teams' number of goals. A first overview can be done by looking to the distribution of the results of the season:
+
+```{r, fig.align='center', fig.width=12, fig.height=6, echo=FALSE}
+library(ggplot2)
+pippo <- ggplot(df, aes(x = FT)) + 
+  geom_bar(position = "stack", color="black", fill="darkblue")+
+  theme_classic()+
+  ggtitle("Which was the most common result?", subtitle="Distribution of results in Serie A 1991-1992")+
+  labs(x="Result", y="Count")+
+  theme(plot.title = element_text(size = 20, face = "bold"))
+
+plot(pippo)
+```
+In the total 306 games, the home team won in 128 occasion, while only in 67 matches there is an away victory. It looks that when a team plays at home tends to score more goals.
+
+This effect is a well-known phenomena in  team sports. This benefit has been attributed to psychological effects supporting fans have on the competitors to psychological or physiological advantages of playing near home in familiar situations. 
+
+This effect in the 1991-92 Serie A can be noticed more by visualizing the histograms of the number of goals made by the local and the visitor team:
 
 
+```{r, fig.align='center', fig.width=12, fig.height=6, echo=FALSE}
+library(cowplot)
+
+hgoal_hist <- ggplot(df, aes(x = hgoal)) + 
+  geom_bar(position = "stack", color="black", fill="darkblue")+
+  theme_classic()+
+  ggtitle("Home goals", subtitle="Distribution of goals made by home team in a game")+
+  labs(x="Number of goals", y="Count")+
+  theme(plot.title = element_text(size = 20, face = "bold"))
+
+vgoal_hist <- ggplot(df, aes(x = vgoal)) + 
+  geom_bar(position = "stack", color="black", fill="darkblue")+
+  theme_classic()+
+  ggtitle("Visitor goals", subtitle="Distribution of goals made by away team in a game")+
+  labs(x="Number of goals", y="Count")+
+  theme(plot.title = element_text(size = 20, face = "bold"))
+
+cowplot::plot_grid(hgoal_hist, vgoal_hist)
 
 
+```
+
+It can be the case that this difference will be not true for all the team in the championship. It can be checked by evaluating the number of goals that each team has made as a local and as a visitor:
+
+```{r, fig.align='center', fig.width=17, fig.height=8, echo=FALSE}
+library(grid)
+
+df_goals <- readRDS("data/season1991_goals.rds")
+
+df_goals_long <- df_goals %>% 
+  select(team_name, goals_made_home, goals_made_visitor) %>% 
+  gather("Stat", "Value", -team_name)
+
+plot_goals <- ggplot(df_goals_long, aes(x = team_name, y = Value, fill = Stat)) +
+  geom_col(position = "stack")+
+  theme(legend.title = element_blank()) +
+  geom_text(aes(label = Value), size = 5, position = position_stack(vjust = 0.5))+
+  ggtitle("Do teams score more at home?", subtitle="Distribution of team goals in Serie A 1991-1992")+
+  labs(x="Team", y="Number of goals")+
+  theme_classic()+
+  scale_fill_discrete(
+    labels = c("Goals made at home", "Goals made away")
+  )+
+  theme(plot.title = element_text(size = 23, face = "bold"))
 
 
+plot(plot_goals)
+```
 
-![](C:/Users/roby2/OneDrive/Desktop/Università/DSSC/Secondo_Anno/Bayesian_Statistics/Bayesian-Statistics/project/plots/results_1991.png)
+A part from some exceptions (Atalanta, Inter and Roma) the majority of the teams shows a significant difference among the goals made in their stadium and away. Thus, by modeling such quantities this global home-bias effect has to be taken into consideration.
+
+To improve our knowledge and increase the complexity of our models, some possible sources of heterogeneity among teams are needed to be found. This can be done by taking a look to the final classification of the championship:
 
 
+```{r, echo=FALSE,layout="l-body-outset"}
 
-```{r}
-wins_home <- nrow(df[df$hgoal > df$vgoal, ]);
-tied_games <-  nrow(df[df$hgoal == df$vgoal, ]);
-wins_away <- nrow(df[df$hgoal < df$vgoal, ])
+df_ranking <- readRDS("data/season1991_ranking.rds")
+kable(df_ranking)
+```
 
-data_wins <- data.frame (nwins  = c("home", "draw", "visitor"),
-                         number = c(wins_home, tied_games, wins_away)
-)
+It is well known that more developed teams tend to acquire better players and, therefore, they will perform better offensively and defensively. These teams (ike AC Milan, Juventus, SSC Napoli) are characterized to be at the top positions of the table and with a positive goal difference. On the other hand, teams that are used to fight for relegation (like US Cremonese, Ascoli Calcio and Hellas Verona) tend to be less skilled due to their lack of talented players, Therefore, they tend to have poor offensive and defensive abilities and they are characterized by a huge negative goals difference. In the middle of these two extremes, there will be teams that performs good in attack and bad in defense (like US Foggia) or, alternatively, bad in attack and good in defense (like Inter), resulting in a nearby 0 goals difference.
 
-print(paste0("Number of games won by the home team: ", data_wins$number[1]))
-print(paste0("Number of games won by the visitor team: ", data_wins$number[2]))
-print(paste0("Number of games finished in draw: ", data_wins$number[3]))
+This difference can be shown explicitly by plotting for each team their total number of goals received and made:
+
+```{r, fig.align='center', fig.width=17, fig.height=8, echo=FALSE}
+library(grid)
+grob <- grobTree(textGrob("Goals made = Goals received", x=0.75,  y=0.86, hjust=0,
+                          gp=gpar(col="black", fontsize=13, alpha=0.4)))
+
+tot_goals <- ggplot(df_goals,  aes(x=goals_received, y=goals_made, colour=rank)) +
+  geom_point(size=3) +
+  geom_text(aes(label=team_name),hjust=0, vjust=0) +
+  annotation_custom(grob)+
+  geom_abline(slope = 1, intercept = 0, color="black", linetype="dashed", size=1.5, alpha=0.2)+
+  ggtitle("Total goals made vs received", subtitle="Serie A 1991-1992")+
+  labs(x="Goals received", y="Goals made")+
+  theme_bw()+
+  theme(plot.title = element_text(size = 23, face = "bold"))
+
+plot(tot_goals)
 ```
 
 
 
+### Model description
 
-![](C:/Users/roby2/OneDrive/Desktop/Università/DSSC/Secondo_Anno/Bayesian_Statistics/Bayesian-Statistics/project/plots/hgoal_vgoal_1991.png)
+Based on these previous observations, we will start to describe the two models adopted by Baio, G., Blangiardo, M. (2010). 
 
-
-
-![](C:/Users/roby2/OneDrive/Desktop/Università/DSSC/Secondo_Anno/Bayesian_Statistics/Bayesian-Statistics/project/plots/goals_home_1991.png)
-
+Before introducing them, let's review some notation: the league is made by a total of $T = 18$ teams, playing each other twice in a season (one at home and one away). The number of goals scored by the home and by the away team in the g−th game of the season ($g = 1, . . . , G = 306$) are indicated as $y_{g1}$ and $y_{g2}$.
 
 
+#### Model 1
+The vector of observed counts in a given game $y_g=(y_{g1}, y_{g2})$ is modelled as a set vector made by two indipendent random variables that follows the Poisson distribution:
 
-### Model
+$$ y_{gj} | \theta_{gj} \sim \text{Poisson}(\theta _{gj}), $$
+where $\theta_g = (\theta_{g1}, \theta_{g2})$ represent the scoring intensity in the g-th game for the team that plays at home ($j=1$) and away ($j=1$), respectevely and the nested indexes $h(g), a(g)=1, ..., T$ identify the team that is playing at home and away in the $g$-th game. The intensity vector $\theta$ will be modelled by using a log-linear random effect:
 
-### MCMC diagnostic
+$$ \log{\theta_{g1}} = home ~ + att_{h(g)} ~ + def_{a(g)},$$
+$$ \log{\theta_{g2}} =  att_{a(g)} ~ + def_{h(g)}. $$
+The scoring intensities for the home and away team are determined jointly by the attack and defense ability of the team involved. For the home team, its scoring intensity will be determined by its offensive skills and by the strength of the defense of the away team. The reciprocal scenario happens in the away team scoring ability, which is determined by the away team's offense and the home team's defense. In addition to that, the  parameter $home$ represents an additional bias that take into consideration tha advantage of the home team by playing in its stadium. This effect is assumed as constant for all the teams throughout the season and so it will be modelled as a fixed effect.
+
+For each $t=1, ..., T$, the team-specific $att_t$, $def_t$ effects parameters are modelled by assuming exchangeability:
+
+$$ att_t \sim \mathcal{N}(\mu_{att}, \tau^{-1}_{att}),  ~ ~  ~ ~  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ def_t  \sim \mathcal{N}(\mu_{def}, \tau^{-1}_{def}). $$ 
+
+Moreover identifiability constraints on the team specific costraints are applied:
+
+$$ \sum_{t=1}^T att_t = 0, ~ ~  ~ ~  ~ ~ ~ ~ ~ ~ ~ ~ \sum_{t=1}^T def_t=0.   $$ 
+
+
+#### Model 2
+
+During the exploratory data analysis we viewed that attack and defense skills can vary differently once we move from teams that compete for the title to others one that are struggling for relegation. The previous model assumes that all team-wise attacks and defenses parameters are coming from a common population distribution. In order to take into account this source of etherogeneity, a more complex model is proposed for the team-specific $att_t$, $def_t$ effects parameters. 
+
+The following model considers the same assumptions for the number goals distribution and the home effect; the random parameters are instead modelled differently. There are allowed three different generating mechanism: one for top teams, one for middle-table team and one for bottom-table team.
+For each team it is defined a vector of probabilities $\pi^{att}_t = (\pi^{att}_{t,1}, \pi^{att}_{t,2}, \pi^{att}_{t,3})$ and $\pi^{def}_t = (\pi^{def}_{t,1}, \pi^{def}_{t,2}, \pi^{def}_{t,3})$ that identify the probability that the attack and the defense ability of the team is one of the three categories. Then, the attack and defense parameters are modelled as a multimodal distribution:
+
+$$ att_t = \sum_{k=1}^3 \pi^{att}_{t,k} ~ \text{nct}(\mu^{att}_k, \tau^{att}_k, \nu), ~ ~  ~ ~  ~ ~ ~ ~ ~ ~ ~ ~ def_t = \sum_{k=1}^3 \pi^{def}_{t,k} ~ \text{nct}(\mu^{def}_k, \tau^{def}_k, \nu). $$
+
+where $\mu^{att}_k, \tau^{att}_k, \mu^{def}_k, \tau^{def}_k$ for $k=1,2,3$ are the population mean and precision of the attack and defense effects of the three team categories.
+
+### Model implementation and results
+
+Once introduced the models theoritecally, we need to implement them, specifying a prior disttibution for the parameters, fitting on the Serie A 1991-92 data and compare the results with the ones of Baio, G., Blangiardo, M. (2010).
+
+Both models have been implemented with the `rstan` package and fitted by using Hamiltonian Monte Carlo.
+
+#### Model 1
+
+[Stan code](https://github.com/RobertoCorti/Bayesian-Statistics/blob/main/project/model_1.stan)
+
+As suggested in Baio, G., Blangiardo, M. (2010), the prior distributions for the hyper-parameters and the home effect are modelled indipendently by using non-informative prior distributions:
+
+$$ home \sim \mathcal{N}(0, 1000) $$
+
+$$ \mu_{att} \sim \mathcal{N}(0, 1000), ~ ~  ~ ~  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~  \mu_{def} \sim \mathcal{N}(0, 1000), $$
+
+$$ \tau_{att} \sim \text{Gamma}(0.1, 0.1), ~ ~  ~ ~  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~  \tau_{def} \sim \text{Gamma}(0.1, 0.1). $$
+
+The following tables shows the 95% credible intervals for the posterior distribution of the parameters:
+
+**Attack**
+
+```{r, echo=FALSE}
+
+fit_model_1 <- readRDS("models/model_1_fit_1991.rds")
+
+summary_model_1_att <- rstan::summary(fit_model_1, pars=c("att", "att_team"))
+summary_model_1_att_df <-  as.data.frame(summary_model_1_att$summary) %>%
+                                select(-c(se_mean, sd, "25%", "75%", n_eff, Rhat))
+
+rownames(summary_model_1_att_df) <- c("mu_att", sort(unique(df$home)))
+
+kable(summary_model_1_att_df)
+```
+**Defense**
+```{r, echo=FALSE}
+
+
+summary_model_1_def <- rstan::summary(fit_model_1, pars=c("def", "def_team"))
+summary_model_1_def_df <-  as.data.frame(summary_model_1_def$summary) %>%
+                                 select(-c(se_mean, sd, "25%", "75%", n_eff, Rhat))
+
+rownames(summary_model_1_def_df) <- c("mu_def", sort(unique(df$home)))
+
+kable(summary_model_1_def_df)
+```
+
+**Home**
+```{r, echo=FALSE}
+
+
+summary_model_1_home <- rstan::summary(fit_model_1, pars=c("home"))
+summary_model_1_home_df <-  as.data.frame(summary_model_1_home$summary) %>%
+                                 select(-c(se_mean, sd, "25%", "75%", n_eff, Rhat))
+
+
+kable(summary_model_1_home_df)
+```
+
+All the intervals are in accordance with the ones reported in Baio, G., Blangiardo, M. (2010).
+The home effect is positive and this is coherent with the fact seen before that the majority of wins are made by the home team. AC Milan, the league winner, have the highest propensity to score. The top three clubs (AC Milan, Juventus and Torino) results the best ones in terms of defense showing the lowest values for the parameter $def$, while Ascoli, Foggia and Verona showed the highest propensity to concede goals by having the highest values of $def$.
+
+#### Model 2 
+
+
+
+
 
 ### Model evaluation
 
