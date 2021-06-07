@@ -265,31 +265,39 @@ assign_position_1991 <- function(team){
   return(df_ranking_1991[df_ranking_1991$team == team, ]$position)
 }
 
-elpd_diffs <- elpd_diffs %>% 
-  mutate(team_rank = sapply(home, assign_rank_1991), team_pos=sapply(home, assign_position_1991))
+assign_match_category <- function(home_team_rank, away_team_rank){
+  match_category <- paste(home_team_rank, away_team_rank, sep = " vs ")
+  return(match_category)
+}
 
 elpd_diffs <- elpd_diffs %>% 
-  arrange(team_rank, team_pos) %>%
+  mutate(team_rank_home = sapply(home, assign_rank_1991), team_pos_home=sapply(home, assign_position_1991)) %>% 
+  mutate(team_rank_visitor = sapply(visitor, assign_rank_1991), team_pos_visitor=sapply(visitor, assign_position_1991))
+
+elpd_diffs <- elpd_diffs %>% 
+  mutate(match_category = mapply(assign_match_category, team_rank_home, team_rank_visitor))
+
+elpd_diffs <- elpd_diffs %>% 
+  arrange(match_category) %>%
   mutate(
     big_diff12 = abs(diff12) > 6,
     Index = 1:n()
   )
 
 
-
 elpd_diff_plot <- ggplot(elpd_diffs, aes(x = Index,y = diff12)) + 
   geom_point(
-    aes(colour = factor(team_rank)), 
+    aes(colour = factor(match_category)), 
     size = 3, 
     alpha = 0.8
   ) + 
   hline_0(size = 0.25) +
   ylab(expression(ELPD[i][2] - ELPD[i][1])) +
-  labs(color='Team category') +
+  labs(color='Match category') +
   ggtitle("Goals home - Difference in pointwise ELPD Model 1 and Model 2", subtitle = "Serie A 1991-92")
 
 plot(elpd_diff_plot)
-ggsave(filename = "plots/loo_elpd_diff_12_home_1991.png", width = 7.5, height = 5.75)
+ggsave(filename = "plots/loo_elpd_diff_12_home_1991_match.png", width = 7.5, height = 5.75)
 
 loo1_away <- loo(loglik1_away)
 loo2_away <- loo(loglik2_away)
@@ -306,10 +314,14 @@ elpd_diffs <-
   )
 
 elpd_diffs <- elpd_diffs %>% 
-  mutate(team_rank = sapply(visitor, assign_rank_1991), team_pos=sapply(visitor, assign_position_1991))
+  mutate(team_rank_home = sapply(home, assign_rank_1991), team_pos_home=sapply(home, assign_position_1991)) %>% 
+  mutate(team_rank_visitor = sapply(visitor, assign_rank_1991), team_pos_visitor=sapply(visitor, assign_position_1991))
 
 elpd_diffs <- elpd_diffs %>% 
-  arrange(team_rank, visitor) %>%
+  mutate(match_category = mapply(assign_match_category, team_rank_home, team_rank_visitor))
+
+elpd_diffs <- elpd_diffs %>% 
+  arrange(match_category) %>%
   mutate(
     big_diff12 = abs(diff12) > 6,
     Index = 1:n()
@@ -320,17 +332,17 @@ theme_update(axis.text = element_text(size = 16))
 
 elpd_diff_plot <- ggplot(elpd_diffs, aes(x = Index,y = diff12)) + 
   geom_point(
-    aes(colour = factor(team_rank)), 
+    aes(colour = factor(match_category)), 
     size = 3, 
     alpha = 0.8
   ) + 
   hline_0(size = 0.25) +
   ylab(expression(ELPD[i][2] - ELPD[i][1])) +
-  labs(color='Team category') +
+  labs(color='Match category') +
   ggtitle("Goals away - Difference in pointwise ELPD Model 1 and Model 2", subtitle = "Serie A 1991-92")
 
 plot(elpd_diff_plot)
-ggsave(filename = "plots/loo_elpd_diff_12_away_1991.png", width = 7.5, height = 5.75)
+ggsave(filename = "plots/loo_elpd_diff_12_away_1991_match.png", width = 7.5, height = 5.75)
 
 
 

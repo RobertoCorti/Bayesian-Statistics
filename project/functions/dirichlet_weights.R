@@ -41,7 +41,7 @@ last_5_positions <- function(team, current_year, points_per_win){
     if (team %in% unique(df_temp_rank$team)){
       position <- df_temp_rank[df_temp_rank$team == team, ]$position
       
-      if(position <= 6){
+      if(position <= 4){
         positions[3] <- positions[3] + 1
       }
       else if(position<=12){
