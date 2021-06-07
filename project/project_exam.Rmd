@@ -345,7 +345,156 @@ With respect to Model 1, also in this case the home factor is considered an adva
 
 ### Model evaluation
 
-In addition to parameters estimates, the procedure taken by the the `rstan` package allow the possibility to generate in-sample replications of the goals scored by the home and visitor team during every match of the championship. These simulated values from the joint posterior predictive distribution can be used to compare these samples to the observed data.  
+In addition to parameters estimates, the `rstan` package allow the possibility to generate in-sample replications of the goals scored by the home and visitor team during every match of the championship. These simulated games from the joint posterior predictive distribution can be used to compare these samples to the observed data. To generate the data used for posterior predictive checks the simulations come from the posterior predictive distribution $p(\bar{y} | y) = \int d\theta p(\bar{y}|\theta)\pi(\theta|y)$. For each of the two models, s the distributions of the replicated datasets are compared to the empirical distribution of the observed outcome. This comparison is done for all the data and by aggregating for each team and by considering some test statistics such as the mean and the standard deviation.
+
+
+#### Model 1
+
+```{r, fig.align='center', fig.width=12, fig.height=6, echo=FALSE}
+y_home_rep <- readRDS("simulations/y_home_rep_model_1_1991.rds")
+y_away_rep <- readRDS("simulations/y_away_rep_model_1_1991.rds")
+
+
+ppc_home <- bayesplot::ppc_bars(df$hgoal, y_home_rep[2000:4000,]) +
+  ggtitle("Posterior predictive histogram of home goals", subtitle = "Serie A 1991-92")+
+  xlab("Number of home goals")
+
+ppc_away <- bayesplot::ppc_bars(df$vgoal, y_away_rep[2000:4000,]) + 
+  ggtitle("Posterior predictive histogram of away goals", subtitle = "Serie A 1991-92")+
+  xlab("Number of away goals")
+
+cowplot::plot_grid(ppc_home, ppc_away)
+```
+
+
+```{r, fig.align='center', fig.width=15, fig.height=8, echo=FALSE}
+
+ppc_home_group <- bayesplot::ppc_bars_grouped(df$hgoal, y_home_rep[2000:4000,], group = df$home)  + ggtitle("Posterior predictive histogram of home goals per team", subtitle = "Serie A 1991-92")
+
+ppc_away_group <- bayesplot::ppc_bars_grouped(df$vgoal, y_away_rep[2000:4000,], group = df$visitor)+
+  ggtitle("Posterior predictive histogram of away goals per team", subtitle = "Serie A 1991-92")
+
+cowplot::plot_grid(ppc_home_group, ppc_away_group)
+```
+
+```{r, fig.align='center', fig.width=14, fig.height=8, echo=FALSE}
+
+mean_ppc_home <- bayesplot::ppc_stat_grouped(
+  y = df$hgoal,
+  yrep = y_home_rep,
+  group = df$home,
+  stat = 'mean',
+  binwidth = 0.1
+) + ggtitle("Mean home goals vs posterior predictive sample medians", subtitle = "Serie A 1991-92")
+mean_ppc_away <- bayesplot::ppc_stat_grouped(
+  y = df$vgoal,
+  yrep = y_away_rep,
+  group = df$visitor,
+  stat = 'mean',
+  binwidth = 0.1
+) + ggtitle("Mean away goals vs posterior predictive sample medians", subtitle = "Serie A 1991-92")
+
+
+cowplot::plot_grid(mean_ppc_home, mean_ppc_away)
+```
+```{r, fig.align='center', fig.width=14, fig.height=8, echo=FALSE}
+
+std_ppc_home <- bayesplot::ppc_stat_grouped(
+  y = df$hgoal,
+  yrep = y_home_rep,
+  group = df$home,
+  stat = 'sd',
+  binwidth = 0.1
+) + ggtitle("Std. dev. home goals vs posterior predictive sample medians", subtitle = "Serie A 1991-92")
+
+std_ppc_away <- bayesplot::ppc_stat_grouped(
+  y = df$vgoal,
+  yrep = y_away_rep,
+  group = df$visitor,
+  stat = 'sd',
+  binwidth = 0.1
+) + ggtitle("Std. dev. away goals vs posterior predictive sample medians", subtitle = "Serie A 1991-92")
+
+
+
+cowplot::plot_grid(std_ppc_home, std_ppc_away)
+```
+
+#### Model 2
+
+```{r, fig.align='center', fig.width=12, fig.height=6, echo=FALSE}
+y_home_rep_2 <- readRDS("simulations/y_home_rep_model_2_1991.rds")
+y_away_rep_2 <- readRDS("simulations/y_away_rep_model_2_1991.rds")
+
+
+ppc_home_2 <- bayesplot::ppc_bars(df$hgoal, y_home_rep_2[2000:4000,]) +
+  ggtitle("Posterior predictive histogram of home goals", subtitle = "Serie A 1991-92")+
+  xlab("Number of home goals")
+
+ppc_away_2 <- bayesplot::ppc_bars(df$vgoal, y_away_rep_2[2000:4000,]) + 
+  ggtitle("Posterior predictive histogram of away goals", subtitle = "Serie A 1991-92")+
+  xlab("Number of away goals")
+
+cowplot::plot_grid(ppc_home_2, ppc_away_2)
+```
+
+
+```{r, fig.align='center', fig.width=15, fig.height=8, echo=FALSE}
+
+ppc_home_group_2 <- bayesplot::ppc_bars_grouped(df$hgoal, y_home_rep_2[2000:4000,], group = df$home)  + ggtitle("Posterior predictive histogram of home goals per team", subtitle = "Serie A 1991-92")
+
+ppc_away_group_2 <- bayesplot::ppc_bars_grouped(df$vgoal, y_away_rep_2[2000:4000,], group = df$visitor)+
+  ggtitle("Posterior predictive histogram of away goals per team", subtitle = "Serie A 1991-92")
+
+cowplot::plot_grid(ppc_home_group_2, ppc_away_group_2)
+```
+
+```{r, fig.align='center', fig.width=14, fig.height=8, echo=FALSE}
+
+mean_ppc_home_2 <- bayesplot::ppc_stat_grouped(
+  y = df$hgoal,
+  yrep = y_home_rep_2,
+  group = df$home,
+  stat = 'mean',
+  binwidth = 0.1
+) + ggtitle("Mean home goals vs posterior predictive sample mean", subtitle = "Serie A 1991-92")
+mean_ppc_away_2 <- bayesplot::ppc_stat_grouped(
+  y = df$vgoal,
+  yrep = y_away_rep_2,
+  group = df$visitor,
+  stat = 'mean',
+  binwidth = 0.1
+) + ggtitle("Mean away goals vs posterior predictive sample mean", subtitle = "Serie A 1991-92")
+
+
+cowplot::plot_grid(mean_ppc_home_2, mean_ppc_away_2)
+```
+
+
+```{r, fig.align='center', fig.width=14, fig.height=8, echo=FALSE}
+
+std_ppc_home_2 <- bayesplot::ppc_stat_grouped(
+  y = df$hgoal,
+  yrep = y_home_rep_2,
+  group = df$home,
+  stat = 'sd',
+  binwidth = 0.1
+) + ggtitle("Std. dev. home goals vs posterior predictive sample std. dev.", subtitle = "Serie A 1991-92")
+
+std_ppc_away_2 <- bayesplot::ppc_stat_grouped(
+  y = df$vgoal,
+  yrep = y_away_rep_2,
+  group = df$visitor,
+  stat = 'sd',
+  binwidth = 0.1
+) + ggtitle("Std. dev. away goals vs posterior predictive sample std. dev.", subtitle = "Serie A 1991-92")
+
+
+cowplot::plot_grid(std_ppc_home_2, std_ppc_away_2)
+```
+
+
+
 
 ### Predictive model comparison
 
