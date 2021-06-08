@@ -57,23 +57,23 @@ model {
   // group 1: bottom-table team
   sigma_att[1] ~ inv_gamma(1, 1);
   sigma_def[1] ~ inv_gamma(1, 1);
-  att_bottom ~ normal(0, 0.5);
-  def_bottom ~ normal(0, 0.5);
+  att_bottom ~ normal(0, 1);
+  def_bottom ~ normal(0, 1);
   
   
   // group 2: mid-table teams
   sigma_att[2] ~ inv_gamma(1, 1);
   sigma_def[2] ~ inv_gamma(1, 1);
-  att_medium ~ normal(0, 0.25);
-  def_medium ~ normal(0, 0.25);
+  att_medium ~ normal(0, 0.5);
+  def_medium ~ normal(0, 0.5);
   
   // group 3: top-table teams
   sigma_att[3] ~ inv_gamma(1, 1);
   sigma_def[3] ~ inv_gamma(1, 1);
-  att_top ~ normal(0, 0.5);
-  def_top ~ normal(0, 0.5);
+  att_top ~ normal(0, 1);
+  def_top ~ normal(0, 1);
   
-  home ~ normal(0, 1000);
+  home ~ normal(0, 1);
   
    for(t in 1:T){
     pi_att[t,] ~ dirichlet(alpha[t]);
