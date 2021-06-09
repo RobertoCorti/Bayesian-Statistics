@@ -15,7 +15,7 @@ Being one of the most popular sports in the world, in recent years football data
 
 **R scripts**:
 
-* [data_preparation.R](https://github.com/RobertoCorti/Bayesian-Statistics/blob/main/project/data_preparation.R): script that read `engsoccer` data and pre-process it in order to obtain the dataframes present in the `data` folder
+* [data_preparation.R](https://github.com/RobertoCorti/Bayesian-Statistics/blob/main/project/data_preparation.R): script that read `engsoccerdata` and pre-process it in order to obtain the dataframes present in the `data` folder
 * [eda.R](https://github.com/RobertoCorti/Bayesian-Statistics/blob/main/project/eda.R): script dedicated to the exploratory data analysis.
 * [fit.R](https://github.com/RobertoCorti/Bayesian-Statistics/blob/main/project/fit.R): script dedicated to compile `model_1.stan` and `model_2.stan` and fit them over the data present in the `data` folder.
 * [posterior_inference.R](https://github.com/RobertoCorti/Bayesian-Statistics/blob/main/project/posterior_inference.R): script dedicated to posterior predictive checks and predictive performance evaluation of Model 1 and Model 2.
