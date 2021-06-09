@@ -16,8 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### Introduction
 
-Being one of the most popular sports in the world, in recent years football data analysis has become an interesting field of study. The aim of this project is to replicate the work of Baio, G., Blangiardo, M. (2010), that propose a Bayesian model for modeling the number of goals scored during a football match. In order to compare the results with the ones of this work, all the analysis has been conducted by using the data about the Italian Serie A championship 1991-1992. 
-
+Being one of the most popular sports in the world, football data analysis has become an interesting field of study in recent years. The aim of this project is to replicate the work of Baio, G., Blangiardo, M. (2010), that propose a Bayesian model for modeling the number of goals scored during a football match. In order to compare the results with the ones of the cited work, all the analysis has been conducted by using the data about the Italian Serie A championship 1991-1992. 
 
 
 ### Exploratory data analysis
@@ -68,7 +67,7 @@ kable(head(df))
 Once provided a proper dataset that summarizes all the matches, the first step is to extract from it some useful information.
 
 
-The first question that may arise by aiming to model the number of goals in a football match is to understand if there is any difference between local and visitor teams' number of goals. A first overview can be done by looking to the distribution of the results of the season:
+A first question that may arise by aiming to model the number of goals in a football match is whether there is any difference between local and visitor teams' number of goals. A first answer can be formulated by looking to the distribution of the results of the season:
 
 ```{r, fig.align='center', fig.width=12, fig.height=6, echo=FALSE}
 library(ggplot2)
@@ -81,9 +80,9 @@ pippo <- ggplot(df, aes(x = FT)) +
 
 plot(pippo)
 ```
-In the total 306 games, the home team won in 128 occasion, while only in 67 matches there is an away victory. It looks that when a team plays at home tends to score more goals.
+In the total of 306 games, the home team won in 128 occasion, while only in 67 matches there is an away victory. It looks that when a team plays at home tends to score more goals.
 
-This effect is a well-known phenomena in  team sports. This benefit has been attributed to psychological effects supporting fans have on the competitors to psychological or physiological advantages of playing near home in familiar situations. 
+This effect is a well-known phenomena in  team sports. This benefit has been attributed to the effects of supporting fans that give psychological or physiological advantages to the local team. 
 
 This effect in the 1991-92 Serie A can be noticed more by visualizing the histograms of the number of goals made by the local and the visitor team:
 
@@ -148,7 +147,7 @@ df_ranking <- readRDS("data/season1991_ranking.rds")
 kable(df_ranking)
 ```
 
-It is well known that more developed teams tend to acquire better players and, therefore, they will perform better offensively and defensively. These teams (ike AC Milan, Juventus, SSC Napoli) are characterized to be at the top positions of the table and with a positive goal difference. On the other hand, teams that are used to fight for relegation (like US Cremonese, Ascoli Calcio and Hellas Verona) tend to be less skilled due to their lack of talented players, Therefore, they tend to have poor offensive and defensive abilities and they are characterized by a huge negative goals difference. In the middle of these two extremes, there will be teams that performs good in attack and bad in defense (like US Foggia) or, alternatively, bad in attack and good in defense (like Inter), resulting in a nearby 0 goals difference.
+It is well known that more developed teams tend to acquire better players and, therefore, they will perform better offensively and defensively. These teams (like AC Milan, Juventus, SSC Napoli) are characterized to be at the top positions of the table and with a positive goal difference. On the other hand, teams that are used to fight for relegation (like US Cremonese, Ascoli Calcio and Hellas Verona) tend to be less skilled due to their lack of talented players. Therefore, they tend to have poor offensive and defensive abilities and they are characterized by a huge negative goals difference. In the middle of these two extremes, there will be teams that performs good in attack and bad in defense (like US Foggia) or, alternatively, bad in attack and good in defense (like Inter), resulting in a nearby 0 goals difference.
 
 This difference can be shown explicitly by plotting for each team their total number of goals received and made:
 
@@ -202,7 +201,7 @@ $$ \sum_{t=1}^T att_t = 0, ~ ~  ~ ~  ~ ~ ~ ~ ~ ~ ~ ~ \sum_{t=1}^T def_t=0.   $$
 
 During the exploratory analysis it has been viewed that attack and defense skills can vary differently once we go from teams that compete for the title to others that are struggling for relegation. The previous model assumes that all team-wise attacks and defenses parameters are coming from a common population distribution. In order to take into account this source of heterogeneity, a more complex model is proposed for the team-specific $att_t$, $def_t$ effects parameters. 
 
-The following model considers the same assumptions for the number goals distribution and the home effect; the random parameters are instead modeled differently. There are allowed three different generating mechanism: one for top teams, one for middle-table team and one for bottom-table team.
+The following model considers the same assumptions for the number of goals' distribution and the home effect; the random parameters are instead modeled differently. There are allowed three different generating mechanism: one for top teams, one for middle-table team and one for bottom-table team.
 For each team it is defined a vector of probabilities $\pi^{att}_t = (\pi^{att}_{t,1}, \pi^{att}_{t,2}, \pi^{att}_{t,3})$ and $\pi^{def}_t = (\pi^{def}_{t,1}, \pi^{def}_{t,2}, \pi^{def}_{t,3})$ that identify the probability that the attack and the defense ability of the team is one of the three categories. Then, the attack and defense parameters are modeled as a multimodal distribution:
 $$ att_t = \sum_{k=1}^3 \pi^{att}_{t,k} ~ \text{nct}(\mu^{att}_k, \sigma^{att}_k, \nu=4), ~ ~  ~ ~  ~ ~ ~ ~ ~ ~ ~ ~ def_t = \sum_{k=1}^3 \pi^{def}_{t,k} ~ \text{nct}(\mu^{def}_k, \sigma^{def}_k, \nu=4). $$
 
@@ -210,7 +209,7 @@ where $\mu^{att}_k, \sigma^{att}_k, \mu^{def}_k, \sigma^{def}_k$ for $k=1,2,3$ a
 
 ### Model implementation and results
 
-Once introduced the models theoretically, we need to implement them, specifying a prior distribution for the parameters, fitting on the Serie A 1991-92 data and compare the results with the ones of Baio, G., Blangiardo, M. (2010).
+Once introduced the models theoretically, we need to implement them by specifying a prior distribution for the parameters, fitting on the Serie A 1991-92 data and compare the results with the ones of Baio, G., Blangiardo, M. (2010).
 
 Both models have been implemented with the `rstan` package and fitted by using Hamiltonian Monte Carlo (HMC).
 
@@ -276,7 +275,7 @@ The home effect is positive and this is coherent with the fact seen before that 
 
 [Stan code](https://github.com/RobertoCorti/Bayesian-Statistics/blob/main/project/model_2.stan)
 
-By aiming to to represent different types of team behaviors, this model requires a huge increase in the number of parameters to fit. In this context using a non-informative prior has lead to a very vague posterior distribution and to a divergent scenario of the Hamiltonian Monte Carlo Scenario. For this reason, it has been made the decision to use informative priors based on past knowledge of the parameters of interests.
+By aiming to to represent different types of team behaviors, this model requires a huge increase in the number of parameters to fit. In this context using a non-informative prior has lead to a very vague posterior distribution and to a divergent scenario of the Hamiltonian Monte Carlo. For this reason, it has been made the decision to use informative priors based on past knowledge of the parameters of interests.
 
 Starting from the team-probabilities parameters $\pi^{att}_t, \pi^{def}_t$, a Dirichlet distribution is adopted:
 $$ \pi^{att}_t \sim \text{Dirichlet}(\alpha_t), ~ ~  ~ ~  ~ ~ ~ ~ ~ ~ ~   \pi^{def}_t \sim \text{Dirichlet}(\alpha_t) $$
@@ -510,7 +509,7 @@ The following figure shows for for each team the cumulative points curve predict
 
 For most part of the teams, the estimations provided by Model 1 and Model 2 seem to produce a good fit with no big differences among them. Model 2 looks to provide a slight improvement for teams like US Cremonese, US Foggia and Juventus. Nevertheless, this scenario is not happening for teams like Torino FC or Inter, where Model 2 seems to work even worse than Model 1.
 
-For having a direct measure of the comparison between the predictive performances of the fitted model, thanks to the `loo` package there is the possibility to have an approximate leave-one-out cross-validation (LOO-CV) estimate of the expected log predictive (ELPD) performance on out-of-sample data. The following results are obtained by considering the difference of these estimates for the two models:
+For having a direct measure of the comparison between the predictive performances of the fitted model, thanks to the `loo` package there is the possibility to have an approximate leave-one-out cross-validation (LOO-CV) estimate of the expected log predictive density (ELPD) on out-of-sample data. The following results are obtained by considering the difference of these estimates for the two models:
 
 **Home goals**:
 ```{r, warning=FALSE, echo=FALSE, message=FALSE}
@@ -537,7 +536,7 @@ loo_compare(loo1_away, loo2_away)
 ```
 
 Model 2 looks to perform slightly better on the task of predicting home goals, while Model 1 seems to be slightly better on away goals. 
-Since there's no a huge difference in terms of model predictive performance, one may be interested on the pointwise predictive performance of the model and see which model could be better in order to forecast a given kind of game. In particular, one can be interested to see whether one model is better to predict goals during a match in which teams of the same or different category are opposed. This can be accomplished by looking to the following ELPD pointwise differences:
+Since there's no a huge difference in terms of model predictive performance, one may be interested on the pointwise predictive performance of the model and see which model could be better in order to forecast a game. In particular, one can be interested to see whether one model is better to predict home or away goals during a match in which teams of different categories (top, medium, bottom) are opposed. This can be accomplished by looking to the following ELPD pointwise differences:
 
 ![](plots/loo_elpd_diff_12_home_1991_match.png)
 
@@ -549,7 +548,7 @@ Since there's no a huge difference in terms of model predictive performance, one
 
 The models presented here are an application of Bayesian hierarchical modeling on football data. By fitting them on the 1991-92 Serie A championship the main aim was to retrieve the same results of the paper in which they were proposed.
 
-The estimates of the first model, which relies on a bivariate independent Poisson distribution and exchangeable attack and defense parameters, is in agreement with the results reported in Baio, G., Blangiardo, M. (2010). Moreover, the posterior checks have confirmed that replications generated from the posterior predictive distribution are statistically consistent with the observed ones. 
+The estimates of the first model, which relies on a bivariate independent Poisson distribution and exchangeable attack and defense parameters, are in agreement with the results reported in Baio, G., Blangiardo, M. (2010). Moreover, the posterior checks have confirmed that replications generated from the posterior predictive distribution are statistically consistent with the observed ones. 
 
 On the other hand, the second model relies on a mixture structure that takes into account the fact that teams show a different propensity to score and concede goals, as shown in the exploratory analysis. This model becomes more complex, with a greater number of parameters to fit. Due to that, some complications has been found while using HMC with a set of non-informative priors. To fix this problem, a set of informative priors, based on the observation of the Model 1 fit and the historical data, have been provided. With that new information, the posterior performance provided, as expected, more "extreme" offensive and defensive parameters for top/bottom teams. However, the model comparison has shown that there's no great evidence that justify the use of this model with respect to Model 1. 
 In order to improve the fit, it would be desirable in the future to perform the following studies:
@@ -558,10 +557,10 @@ In order to improve the fit, it would be desirable in the future to perform the 
 
 * More prior information on the strength of each team,
 
-* Addition of variables and covariates on the logarithm of the Poisson means, that could take into account some important factors that actual models do not take into account. These could be:
+* Addition of variables and covariates on the logarithm of the Poisson means, that could take into account some important factors that could affect the tendency to score a goal. These could be:
   1. The number of injuries that a given team suffers previous the match,
 
   2. When a team has played during the week a match of an European competition.
 
-  3. A difference in the supports of the fans. It may be the case that a team receive a more positive $home$ advantage with respect to the others.
+  3. Assuming a different home advantage for each team. 
 
