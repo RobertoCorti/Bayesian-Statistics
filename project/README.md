@@ -22,8 +22,8 @@ Being one of the most popular sports in the world, in recent years football data
 
 **Stan codes**:
 
-* `model_1.stan`: code that implement the first model proposed by Baio, G., Blangiardo, M. (2010), that relies on the use of a bivariate independent Poisson distribution and exchangeable attack and defense parameters.
-* `model_2.stan`: code that implement the second model proposed by Baio, G., Blangiardo, M. (2010), that add to the first model a mixture distribution that takes into account the fact that teams show a different propensity to score and concede goals.
+* [model_1.stan](https://github.com/RobertoCorti/Bayesian-Statistics/blob/main/project/model_1.stan): code that implement the first model proposed by Baio, G., Blangiardo, M. (2010), that relies on the use of a bivariate independent Poisson distribution and exchangeable attack and defense parameters.
+* [model_2.stan](https://github.com/RobertoCorti/Bayesian-Statistics/blob/main/project/model_2.stan): code that implement the second model proposed by Baio, G., Blangiardo, M. (2010), that add to the first model a mixture distribution that takes into account the fact that teams show a different propensity to score and concede goals.
 
 ### Structure of the folders
 
